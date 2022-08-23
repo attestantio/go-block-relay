@@ -15,13 +15,12 @@ package rest
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	mockauctioneer "github.com/attestantio/go-block-relay/services/blockauctioneer/mock"
+	mockbuilderbidprovider "github.com/attestantio/go-block-relay/services/builderbidprovider/mock"
 	nullmetrics "github.com/attestantio/go-block-relay/services/metrics/null"
 	mockvalidatorregistrar "github.com/attestantio/go-block-relay/services/validatorregistrar/mock"
 	"github.com/rs/zerolog"
@@ -33,6 +32,7 @@ func TestSetBlockDelay(t *testing.T) {
 	registrar := mockvalidatorregistrar.New()
 	auctioneer := mockauctioneer.New()
 	monitor := nullmetrics.New()
+	builderBidProvider := mockbuilderbidprovider.New()
 
 	service, err := New(ctx,
 		WithLogLevel(zerolog.Disabled),
@@ -41,6 +41,7 @@ func TestSetBlockDelay(t *testing.T) {
 		WithListenAddress(":14734"),
 		WithValidatorRegistrar(registrar),
 		WithBlockAuctioneer(auctioneer),
+		WithBuilderBidProvider(builderBidProvider),
 	)
 	require.NoError(t, err)
 
@@ -53,6 +54,7 @@ func TestSetBlockDelay(t *testing.T) {
 		WithValidatorRegistrar(registrar),
 		WithValidatorRegistrar(erroringRegistrar),
 		WithBlockAuctioneer(auctioneer),
+		WithBuilderBidProvider(builderBidProvider),
 	)
 	require.NoError(t, err)
 
@@ -64,31 +66,13 @@ func TestSetBlockDelay(t *testing.T) {
 		statusCode int
 	}{
 		{
-			name:    "BodyEmpty",
-			service: service,
-			request: &http.Request{
-				Body: io.NopCloser(strings.NewReader(``)),
-			},
-			writer:     httptest.NewRecorder(),
-			statusCode: http.StatusBadRequest,
-		},
-		{
-			name:    "BodyInvalid",
-			service: service,
-			request: &http.Request{
-				Body: io.NopCloser(strings.NewReader(`[]`)),
-			},
-			writer:     httptest.NewRecorder(),
-			statusCode: http.StatusBadRequest,
-		},
-		{
 			name:    "Good",
 			service: service,
 			request: &http.Request{
 				// Body: io.NopCloser(strings.NewReader(`{"source":"client","method":"block event","slot":"123","delay_ms":"12345"}`)),
 			},
 			writer:     httptest.NewRecorder(),
-			statusCode: http.StatusCreated,
+			statusCode: http.StatusNoContent,
 		},
 		{
 			name:    "Erroring",

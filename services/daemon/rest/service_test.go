@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	mockauctioneer "github.com/attestantio/go-block-relay/services/blockauctioneer/mock"
+	mockbuilderbidprovider "github.com/attestantio/go-block-relay/services/builderbidprovider/mock"
 	restdaemon "github.com/attestantio/go-block-relay/services/daemon/rest"
 	nullmetrics "github.com/attestantio/go-block-relay/services/metrics/null"
 	mockregistrar "github.com/attestantio/go-block-relay/services/validatorregistrar/mock"
@@ -30,6 +31,7 @@ func TestService(t *testing.T) {
 	registrar := mockregistrar.New()
 	auctioneer := mockauctioneer.New()
 	monitor := nullmetrics.New()
+	builderBidProvider := mockbuilderbidprovider.New()
 
 	tests := []struct {
 		name   string
@@ -45,6 +47,7 @@ func TestService(t *testing.T) {
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 			err: "problem with parameters: no monitor specified",
 		},
@@ -56,6 +59,7 @@ func TestService(t *testing.T) {
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 			err: "problem with parameters: no server name specified",
 		},
@@ -67,6 +71,7 @@ func TestService(t *testing.T) {
 				restdaemon.WithServerName("server.attestant.io"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 			err: "problem with parameters: no listen address specified",
 		},
@@ -78,6 +83,7 @@ func TestService(t *testing.T) {
 				restdaemon.WithServerName("server.attestant.io"),
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 			err: "problem with parameters: no validator registrar specified",
 		},
@@ -89,8 +95,21 @@ func TestService(t *testing.T) {
 				restdaemon.WithServerName("server.attestant.io"),
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
+				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 			err: "problem with parameters: no block auctioneer specified",
+		},
+		{
+			name: "BuilderBidProviderMissing",
+			params: []restdaemon.Parameter{
+				restdaemon.WithLogLevel(zerolog.Disabled),
+				restdaemon.WithMonitor(monitor),
+				restdaemon.WithServerName("server.attestant.io"),
+				restdaemon.WithListenAddress(":14734"),
+				restdaemon.WithValidatorRegistrar(registrar),
+				restdaemon.WithBlockAuctioneer(auctioneer),
+			},
+			err: "problem with parameters: no builder bid provider specified",
 		},
 		{
 			name: "Good",
@@ -101,6 +120,7 @@ func TestService(t *testing.T) {
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 		},
 	}
