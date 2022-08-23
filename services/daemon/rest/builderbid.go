@@ -26,7 +26,7 @@ import (
 )
 
 func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
-	log.Warn().Bool("jgm", true).Msg("getBuilderBid called")
+	log.Trace().Msg("getBuilderBid called")
 	ctx := context.Background()
 
 	// Obtain path variables.
