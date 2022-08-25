@@ -43,7 +43,6 @@ func TestService(t *testing.T) {
 			params: []restdaemon.Parameter{
 				restdaemon.WithLogLevel(zerolog.Disabled),
 				restdaemon.WithMonitor(nil),
-				restdaemon.WithServerName("server.attestant.io"),
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
@@ -52,23 +51,10 @@ func TestService(t *testing.T) {
 			err: "problem with parameters: no monitor specified",
 		},
 		{
-			name: "ServerNameMissing",
-			params: []restdaemon.Parameter{
-				restdaemon.WithLogLevel(zerolog.Disabled),
-				restdaemon.WithMonitor(monitor),
-				restdaemon.WithListenAddress(":14734"),
-				restdaemon.WithValidatorRegistrar(registrar),
-				restdaemon.WithBlockAuctioneer(auctioneer),
-				restdaemon.WithBuilderBidProvider(builderBidProvider),
-			},
-			err: "problem with parameters: no server name specified",
-		},
-		{
 			name: "ListenAddressMissing",
 			params: []restdaemon.Parameter{
 				restdaemon.WithLogLevel(zerolog.Disabled),
 				restdaemon.WithMonitor(monitor),
-				restdaemon.WithServerName("server.attestant.io"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
 				restdaemon.WithBuilderBidProvider(builderBidProvider),
@@ -80,7 +66,6 @@ func TestService(t *testing.T) {
 			params: []restdaemon.Parameter{
 				restdaemon.WithLogLevel(zerolog.Disabled),
 				restdaemon.WithMonitor(monitor),
-				restdaemon.WithServerName("server.attestant.io"),
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithBlockAuctioneer(auctioneer),
 				restdaemon.WithBuilderBidProvider(builderBidProvider),
@@ -92,7 +77,6 @@ func TestService(t *testing.T) {
 			params: []restdaemon.Parameter{
 				restdaemon.WithLogLevel(zerolog.Disabled),
 				restdaemon.WithMonitor(monitor),
-				restdaemon.WithServerName("server.attestant.io"),
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBuilderBidProvider(builderBidProvider),
@@ -104,7 +88,6 @@ func TestService(t *testing.T) {
 			params: []restdaemon.Parameter{
 				restdaemon.WithLogLevel(zerolog.Disabled),
 				restdaemon.WithMonitor(monitor),
-				restdaemon.WithServerName("server.attestant.io"),
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
@@ -116,7 +99,6 @@ func TestService(t *testing.T) {
 			params: []restdaemon.Parameter{
 				restdaemon.WithLogLevel(zerolog.Disabled),
 				restdaemon.WithMonitor(monitor),
-				restdaemon.WithServerName("server.attestant.io"),
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
