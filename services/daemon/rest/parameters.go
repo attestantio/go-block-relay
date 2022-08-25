@@ -109,9 +109,10 @@ func parseAndCheckParameters(params ...Parameter) (*parameters, error) {
 	if parameters.monitor == nil {
 		return nil, errors.New("no monitor specified")
 	}
-	if parameters.serverName == "" {
-		return nil, errors.New("no server name specified")
-	}
+	// At current the server name is not required, as the daemon does not run on HTTPS.
+	// if parameters.serverName == "" {
+	// 	return nil, errors.New("no server name specified")
+	// }
 	if parameters.listenAddress == "" {
 		return nil, errors.New("no listen address specified")
 	}

@@ -80,6 +80,7 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 	router.HandleFunc("/eth/v1/builder/header/{slot}/{parenthash}/{pubkey}", s.getBuilderBid).Methods("GET")
 	router.HandleFunc("/eth/v1/builder/status", s.getStatus).Methods("GET")
 
+	// At current the service does not run over HTTPS.
 	if false {
 		certManager := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
