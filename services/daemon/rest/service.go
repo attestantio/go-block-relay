@@ -80,6 +80,10 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 	router.HandleFunc("/eth/v1/builder/header/{slot}/{parenthash}/{pubkey}", s.getBuilderBid).Methods("GET")
 	router.HandleFunc("/eth/v1/builder/status", s.getStatus).Methods("GET")
 
+	s.srv = &http.Server{
+		Addr:    parameters.listenAddress,
+		Handler: router,
+	}
 	// At current the service does not run over HTTPS.
 	if false {
 		certManager := autocert.Manager{
@@ -88,28 +92,24 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 			Cache:      autocert.DirCache("./certs"),
 		}
 
-		s.srv = &http.Server{
-			Addr:    parameters.listenAddress,
-			Handler: router,
-			TLSConfig: &tls.Config{
-				MinVersion:               tls.VersionTLS13,
-				CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
-				GetCertificate:           certManager.GetCertificate,
-				PreferServerCipherSuites: true,
-				CipherSuites: []uint16{
-					tls.TLS_AES_128_GCM_SHA256,
-					tls.TLS_CHACHA20_POLY1305_SHA256,
-					tls.TLS_AES_256_GCM_SHA384,
-					tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-					tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-					tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-					tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-					tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-					tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-				},
+		s.srv.TLSConfig = &tls.Config{
+			MinVersion:               tls.VersionTLS13,
+			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+			GetCertificate:           certManager.GetCertificate,
+			PreferServerCipherSuites: true,
+			CipherSuites: []uint16{
+				tls.TLS_AES_128_GCM_SHA256,
+				tls.TLS_CHACHA20_POLY1305_SHA256,
+				tls.TLS_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
 			},
-			TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 		}
+		s.srv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 
 		// Listen on HTTP port for certificate updates.
 		go func() {
@@ -130,7 +130,7 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 		// Insecure.
 		go func() {
 			log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting daemon")
-			if err := http.ListenAndServe(parameters.listenAddress, router); err != nil {
+			if err := s.srv.ListenAndServe(); err != nil {
 				log.Error().Err(err).Msg("HTTP server shut down")
 			}
 		}()
@@ -141,12 +141,21 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 		for {
-			sig := <-sigCh
-			if sig == syscall.SIGINT || sig == syscall.SIGTERM || sig == os.Interrupt || sig == os.Kill {
+			select {
+			case sig := <-sigCh:
+				if sig == syscall.SIGINT || sig == syscall.SIGTERM || sig == os.Interrupt || sig == os.Kill {
+					log.Info().Msg("Received signal, shutting down")
+					if err := s.srv.Shutdown(ctx); err != nil {
+						log.Warn().Err(err).Msg("Failed to shutdown service")
+					}
+					return
+				}
+			case <-ctx.Done():
+				log.Info().Msg("Context done, shutting down")
 				if err := s.srv.Shutdown(ctx); err != nil {
 					log.Warn().Err(err).Msg("Failed to shutdown service")
 				}
-				break
+				return
 			}
 		}
 	}()

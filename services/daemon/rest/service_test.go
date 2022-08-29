@@ -16,12 +16,14 @@ package rest_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	mockauctioneer "github.com/attestantio/go-block-relay/services/blockauctioneer/mock"
 	mockbuilderbidprovider "github.com/attestantio/go-block-relay/services/builderbidprovider/mock"
 	restdaemon "github.com/attestantio/go-block-relay/services/daemon/rest"
 	nullmetrics "github.com/attestantio/go-block-relay/services/metrics/null"
 	mockregistrar "github.com/attestantio/go-block-relay/services/validatorregistrar/mock"
+	"github.com/attestantio/go-block-relay/testing/logger"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
@@ -117,4 +119,29 @@ func TestService(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestShutdown(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	registrar := mockregistrar.New()
+	auctioneer := mockauctioneer.New()
+	monitor := nullmetrics.New()
+	builderBidProvider := mockbuilderbidprovider.New()
+
+	capture := logger.NewLogCapture()
+	_, err := restdaemon.New(ctx,
+		restdaemon.WithMonitor(monitor),
+		restdaemon.WithListenAddress(":14734"),
+		restdaemon.WithValidatorRegistrar(registrar),
+		restdaemon.WithBlockAuctioneer(auctioneer),
+		restdaemon.WithBuilderBidProvider(builderBidProvider),
+	)
+	require.NoError(t, err)
+
+	// Cancel the context to signal the daemon.
+	cancel()
+	time.Sleep(100 * time.Millisecond)
+
+	// Ensure that the service took the correct path.
+	capture.AssertHasEntry(t, "Context done, shutting down")
 }

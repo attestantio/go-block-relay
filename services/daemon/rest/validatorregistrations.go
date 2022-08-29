@@ -15,16 +15,17 @@ package rest
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/attestantio/go-block-relay/services/validatorregistrar"
+	"github.com/attestantio/go-block-relay/types"
 )
 
 func (s *Service) postValidatorRegistrations(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	provider, isProvider := s.validatorRegistrar.(validatorregistrar.ValidatorRegistrationPassthrough)
-	if isProvider {
+	if provider, isProvider := s.validatorRegistrar.(validatorregistrar.ValidatorRegistrationPassthrough); isProvider {
 		// We have a passthrough: use it.
 		if err := provider.ValidatorRegistrationsPassthrough(ctx, r.Body); err != nil {
 			log.Error().Err(err).Msg("Failed to register validators with passthrough")
@@ -35,6 +36,25 @@ func (s *Service) postValidatorRegistrations(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	log.Error().Msg("Non-passthrough for validator registration not currently supported")
+	if provider, isProvider := s.validatorRegistrar.(validatorregistrar.ValidatorRegistrationHandler); isProvider {
+		// We need to unmarshal the request body ourselves.
+
+		registrations := make([]*types.SignedValidatorRegistration, 0)
+		if err := json.NewDecoder(r.Body).Decode(&registrations); err != nil {
+			log.Debug().Err(err).Msg("Supplied with invalid data")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if err := provider.ValidatorRegistrations(ctx, registrations); err != nil {
+			log.Error().Err(err).Msg("Failed to register validators")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	log.Error().Msg("Request not supported by service")
 	w.WriteHeader(http.StatusInternalServerError)
 }
