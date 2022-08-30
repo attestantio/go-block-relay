@@ -16,7 +16,6 @@ package rest
 import (
 	"context"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -75,18 +74,5 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := json.Marshal(bid)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to marshal bid")
-		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to marshal bid",
-		})
-		return
-	}
-
-	s.sendResponse(w, http.StatusOK, &APIResponse{
-		Code:    http.StatusOK,
-		Message: string(data),
-	})
+	s.sendResponse(w, http.StatusOK, bid)
 }
