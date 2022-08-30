@@ -16,7 +16,9 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/attestantio/go-block-relay/services/validatorregistrar"
 	"github.com/attestantio/go-block-relay/types"
@@ -25,36 +27,55 @@ import (
 func (s *Service) postValidatorRegistrations(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
+	var errs []string
 	if provider, isProvider := s.validatorRegistrar.(validatorregistrar.ValidatorRegistrationPassthrough); isProvider {
 		// We have a passthrough: use it.
-		if err := provider.ValidatorRegistrationsPassthrough(ctx, r.Body); err != nil {
+		var err error
+		errs, err = provider.ValidatorRegistrationsPassthrough(ctx, r.Body)
+		if err != nil {
 			log.Error().Err(err).Msg("Failed to register validators with passthrough")
-			w.WriteHeader(http.StatusInternalServerError)
+			s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
+				Code:    http.StatusInternalServerError,
+				Message: "Failed to register validators (1)",
+			})
 			return
 		}
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	if provider, isProvider := s.validatorRegistrar.(validatorregistrar.ValidatorRegistrationHandler); isProvider {
+	} else if provider, isProvider := s.validatorRegistrar.(validatorregistrar.ValidatorRegistrationHandler); isProvider {
 		// We need to unmarshal the request body ourselves.
-
 		registrations := make([]*types.SignedValidatorRegistration, 0)
 		if err := json.NewDecoder(r.Body).Decode(&registrations); err != nil {
 			log.Debug().Err(err).Msg("Supplied with invalid data")
-			w.WriteHeader(http.StatusBadRequest)
+			s.sendResponse(w, http.StatusBadRequest, &APIResponse{
+				Code:    http.StatusBadRequest,
+				Message: fmt.Sprintf("invalid input: %s", err.Error()),
+			})
 			return
 		}
 
-		if err := provider.ValidatorRegistrations(ctx, registrations); err != nil {
+		var err error
+		errs, err = provider.ValidatorRegistrations(ctx, registrations)
+		if err != nil {
 			log.Error().Err(err).Msg("Failed to register validators")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+			s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
+				Code:    http.StatusInternalServerError,
+				Message: "Failed to register validators (2)",
+			})
 		}
-		w.WriteHeader(http.StatusNoContent)
+	} else {
+		log.Error().Msg("Request not supported by service")
+		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "Request not supported by service",
+		})
 		return
 	}
 
-	log.Error().Msg("Request not supported by service")
-	w.WriteHeader(http.StatusInternalServerError)
+	if len(errs) == 0 {
+		s.sendResponse(w, http.StatusOK, nil)
+	} else {
+		s.sendResponse(w, http.StatusBadRequest, &APIResponse{
+			Code:    http.StatusBadRequest,
+			Message: strings.Join(errs, ";"),
+		})
+	}
 }

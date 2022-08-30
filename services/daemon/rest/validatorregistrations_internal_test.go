@@ -29,6 +29,7 @@ import (
 
 func TestSetBlockDelay(t *testing.T) {
 	ctx := context.Background()
+
 	registrar := mockvalidatorregistrar.New()
 	auctioneer := mockauctioneer.New()
 	monitor := nullmetrics.New()
@@ -72,7 +73,7 @@ func TestSetBlockDelay(t *testing.T) {
 				// Body: io.NopCloser(strings.NewReader(`{"source":"client","method":"block event","slot":"123","delay_ms":"12345"}`)),
 			},
 			writer:     httptest.NewRecorder(),
-			statusCode: http.StatusNoContent,
+			statusCode: http.StatusOK,
 		},
 		{
 			name:    "Erroring",

@@ -26,11 +26,11 @@ type Service interface{}
 // ValidatorRegistrationPassthrough is the interface for handling validator registrations with passthrough.
 type ValidatorRegistrationPassthrough interface {
 	// ValidatorRegistrationsPassthrough handles validator registrations directly.
-	ValidatorRegistrationsPassthrough(ctx context.Context, reader io.ReadCloser) error
+	ValidatorRegistrationsPassthrough(ctx context.Context, reader io.ReadCloser) ([]string, error)
 }
 
 // ValidatorRegistrationHandler is the interface for handling validator registrations.
 type ValidatorRegistrationHandler interface {
 	// ValidatorRegistrations handles validator registrations.
-	ValidatorRegistrations(ctx context.Context, registrations []*types.SignedValidatorRegistration) error
+	ValidatorRegistrations(ctx context.Context, registrations []*types.SignedValidatorRegistration) ([]string, error)
 }

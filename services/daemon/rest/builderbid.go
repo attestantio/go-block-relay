@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,15 +34,21 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	tmpInt, err := strconv.ParseUint(vars["slot"], 10, 64)
 	if err != nil {
-		log.Trace().Err(err).Str("slot", vars["slot"]).Msg("Invalid slot")
-		w.WriteHeader(http.StatusBadRequest)
+		log.Debug().Err(err).Str("slot", vars["slot"]).Msg("Invalid slot")
+		s.sendResponse(w, http.StatusBadRequest, &APIResponse{
+			Code:    http.StatusBadRequest,
+			Message: fmt.Sprintf("invalid slot %s", vars["slot"]),
+		})
 		return
 	}
 	slot := phase0.Slot(tmpInt)
 	tmpBytes, err := hex.DecodeString(strings.TrimPrefix(vars["parenthash"], "0x"))
 	if err != nil {
-		log.Trace().Err(err).Str("parenthash", vars["parenthash"]).Msg("Invalid parent hash")
-		w.WriteHeader(http.StatusBadRequest)
+		log.Debug().Err(err).Str("parenthash", vars["parenthash"]).Msg("Invalid parent hash")
+		s.sendResponse(w, http.StatusBadRequest, &APIResponse{
+			Code:    http.StatusBadRequest,
+			Message: fmt.Sprintf("invalid parent hash %s", vars["parenthash"]),
+		})
 		return
 	}
 	parentHash := phase0.Hash32{}
@@ -49,7 +56,10 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 	tmpBytes, err = hex.DecodeString(strings.TrimPrefix(vars["pubkey"], "0x"))
 	if err != nil {
 		log.Trace().Err(err).Str("pubkey", vars["pubkey"]).Msg("Invalid public key")
-		w.WriteHeader(http.StatusBadRequest)
+		s.sendResponse(w, http.StatusBadRequest, &APIResponse{
+			Code:    http.StatusBadRequest,
+			Message: fmt.Sprintf("invalid public key %s", vars["pubkey"]),
+		})
 		return
 	}
 	pubkey := phase0.BLSPubKey{}
@@ -58,20 +68,25 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 	bid, err := s.builderBidProvider.BuilderBid(ctx, slot, parentHash, pubkey)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to obtain bid")
-		w.WriteHeader(http.StatusNoContent)
+		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to obtain bid",
+		})
 		return
 	}
 
 	data, err := json.Marshal(bid)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to marshal bid")
-		w.WriteHeader(http.StatusInternalServerError)
+		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to marshal bid",
+		})
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		log.Error().Err(err).Msg("Failed to write bid")
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+	s.sendResponse(w, http.StatusOK, &APIResponse{
+		Code:    http.StatusOK,
+		Message: string(data),
+	})
 }

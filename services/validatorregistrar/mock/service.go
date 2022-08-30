@@ -29,11 +29,11 @@ func New() *Service {
 }
 
 // ValidatorRegistrations handles validator registrations.
-func (s *Service) ValidatorRegistrations(ctx context.Context, registrations []*types.SignedValidatorRegistration) error {
-	return nil
+func (s *Service) ValidatorRegistrations(ctx context.Context, registrations []*types.SignedValidatorRegistration) ([]string, error) {
+	return nil, nil
 }
 
 // ValidatorRegistrationsPassthrough handles validator registrations directly.
-func (s *Service) ValidatorRegistrationsPassthrough(ctx context.Context, reader io.ReadCloser) error {
-	return nil
+func (s *Service) ValidatorRegistrationsPassthrough(ctx context.Context, reader io.ReadCloser) ([]string, error) {
+	return nil, nil
 }
