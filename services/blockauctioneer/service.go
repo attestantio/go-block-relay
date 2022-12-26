@@ -29,8 +29,8 @@ type Service interface{}
 type Results struct {
 	// Values is a map of builder client=>value.
 	Values map[string]*big.Int
-	// Provider is used to unblind the block.
-	Provider builderclient.BuilderBidProvider
+	// Providers is used to unblind the block.
+	Providers []builderclient.BuilderBidProvider
 	// Bid is the winning signed builder bid.
 	Bid *spec.VersionedSignedBuilderBid
 }

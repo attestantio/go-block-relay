@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/attestantio/go-block-relay/loggers"
 	"github.com/attestantio/go-block-relay/services/builderbidprovider"
@@ -81,8 +82,9 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 	router.HandleFunc("/eth/v1/builder/status", s.getStatus).Methods("GET")
 
 	s.srv = &http.Server{
-		Addr:    parameters.listenAddress,
-		Handler: router,
+		Addr:              parameters.listenAddress,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 	// At current the service does not run over HTTPS.
 	if false {
@@ -114,7 +116,12 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 		// Listen on HTTP port for certificate updates.
 		go func() {
 			log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting certificate update service")
-			if err := http.ListenAndServe(":http", certManager.HTTPHandler(nil)); err != nil {
+			server := &http.Server{
+				Addr:              ":http",
+				Handler:           certManager.HTTPHandler(nil),
+				ReadHeaderTimeout: 5 * time.Second,
+			}
+			if err := server.ListenAndServe(); err != nil {
 				log.Error().Err(err).Msg("Certificate update service stopped")
 			}
 		}()

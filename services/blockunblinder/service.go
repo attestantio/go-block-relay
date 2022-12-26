@@ -16,7 +16,7 @@ package blockunblinder
 import (
 	"context"
 
-	apiv1 "github.com/attestantio/go-eth2-client/api/v1"
+	"github.com/attestantio/go-eth2-client/api"
 	"github.com/attestantio/go-eth2-client/spec"
 )
 
@@ -25,9 +25,9 @@ type Service interface{}
 
 // BlockUnblinder is the interface for unblinding blocks.
 type BlockUnblinder interface {
-	// UnblindBlock unblindes the given block.
+	// UnblindBlock unblinds the given block.
 	UnblindBlock(ctx context.Context,
-		block *apiv1.SignedBlindedBeaconBlock,
+		block *api.VersionedSignedBlindedBeaconBlock,
 	) (
 		*spec.VersionedSignedBeaconBlock,
 		error,
