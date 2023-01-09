@@ -3,8 +3,8 @@ module github.com/attestantio/go-block-relay
 go 1.18
 
 require (
-	github.com/attestantio/go-builder-client v0.2.3
-	github.com/attestantio/go-eth2-client v0.15.1
+	github.com/attestantio/go-builder-client v0.2.6
+	github.com/attestantio/go-eth2-client v0.15.2
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/ferranbt/fastssz v0.1.2
 	github.com/gin-gonic/gin v1.8.2
