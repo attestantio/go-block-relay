@@ -29,13 +29,13 @@ func New() *Service {
 }
 
 // BuilderBid provides a builder bid.
-func (s *Service) BuilderBid(ctx context.Context,
-	slot phase0.Slot,
-	parentHash phase0.Hash32,
-	pubkey phase0.BLSPubKey,
+func (s *Service) BuilderBid(_ context.Context,
+	_ phase0.Slot,
+	_ phase0.Hash32,
+	_ phase0.BLSPubKey,
 ) (
 	*spec.VersionedSignedBuilderBid,
 	error,
 ) {
-	return nil, nil
+	return &spec.VersionedSignedBuilderBid{}, nil
 }

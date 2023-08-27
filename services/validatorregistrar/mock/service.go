@@ -1,4 +1,4 @@
-// Copyright © 2022 Attestant Limited.
+// Copyright © 2022, 2023 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -29,11 +29,21 @@ func New() *Service {
 }
 
 // ValidatorRegistrations handles validator registrations.
-func (s *Service) ValidatorRegistrations(ctx context.Context, registrations []*types.SignedValidatorRegistration) ([]string, error) {
+func (s *Service) ValidatorRegistrations(_ context.Context,
+	_ []*types.SignedValidatorRegistration,
+) (
+	[]string,
+	error,
+) {
 	return nil, nil
 }
 
 // ValidatorRegistrationsPassthrough handles validator registrations directly.
-func (s *Service) ValidatorRegistrationsPassthrough(ctx context.Context, reader io.ReadCloser) ([]string, error) {
+func (s *Service) ValidatorRegistrationsPassthrough(_ context.Context,
+	_ io.ReadCloser,
+) (
+	[]string,
+	error,
+) {
 	return nil, nil
 }

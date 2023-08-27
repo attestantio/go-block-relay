@@ -34,11 +34,11 @@ func (s *Service) sendResponse(w http.ResponseWriter, statusCode int, resp inter
 		w.WriteHeader(statusCode)
 		data, err := json.Marshal(resp)
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to marshal response")
+			s.log.Error().Err(err).Msg("Failed to marshal response")
 		}
 		_, err = w.Write(data)
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to write response")
+			s.log.Error().Err(err).Msg("Failed to write response")
 		}
 	}
 }

@@ -35,13 +35,11 @@ import (
 
 // Service is the REST daemon service.
 type Service struct {
+	log                zerolog.Logger
 	srv                *http.Server
 	validatorRegistrar validatorregistrar.Service
 	builderBidProvider builderbidprovider.Service
 }
-
-// module-wide log.
-var log zerolog.Logger
 
 // New creates a new JSON-RPC daemon service.
 func New(ctx context.Context, params ...Parameter) (*Service, error) {
@@ -51,7 +49,7 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 	}
 
 	// Set logging.
-	log = zerologger.With().Str("service", "daemon").Str("impl", "rest").Logger()
+	log := zerologger.With().Str("service", "daemon").Str("impl", "rest").Logger()
 	if parameters.logLevel != log.GetLevel() {
 		log = log.Level(parameters.logLevel)
 	}
@@ -61,6 +59,7 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 	}
 
 	s := &Service{
+		log:                log,
 		validatorRegistrar: parameters.validatorRegistrar,
 		builderBidProvider: parameters.builderBidProvider,
 	}
@@ -115,33 +114,32 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 
 		// Listen on HTTP port for certificate updates.
 		go func() {
-			log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting certificate update service")
+			s.log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting certificate update service")
 			server := &http.Server{
 				Addr:              ":http",
 				Handler:           certManager.HTTPHandler(nil),
 				ReadHeaderTimeout: 5 * time.Second,
 			}
 			if err := server.ListenAndServe(); err != nil {
-				log.Error().Err(err).Msg("Certificate update service stopped")
+				s.log.Error().Err(err).Msg("Certificate update service stopped")
 			}
 		}()
 
 		go func() {
-			log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting daemon")
+			s.log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting daemon")
 			if err := s.srv.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
 				// if err := s.srv.ListenAndServe(); err != http.ErrServerClosed {
-				log.Error().Err(err).Msg("Server shut down unexpectedly")
+				s.log.Error().Err(err).Msg("Server shut down unexpectedly")
 			}
 		}()
 	} else {
 		// Insecure.
 		go func() {
-			log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting daemon")
+			s.log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting daemon")
 			if err := s.srv.ListenAndServe(); err != nil {
-				log.Error().Err(err).Msg("HTTP server shut down")
+				s.log.Error().Err(err).Msg("HTTP server shut down")
 			}
 		}()
-
 	}
 
 	go func() {
@@ -151,17 +149,19 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 			select {
 			case sig := <-sigCh:
 				if sig == syscall.SIGINT || sig == syscall.SIGTERM || sig == os.Interrupt || sig == os.Kill {
-					log.Info().Msg("Received signal, shutting down")
+					s.log.Info().Msg("Received signal, shutting down")
 					if err := s.srv.Shutdown(ctx); err != nil {
-						log.Warn().Err(err).Msg("Failed to shutdown service")
+						s.log.Warn().Err(err).Msg("Failed to shutdown service")
 					}
+
 					return
 				}
 			case <-ctx.Done():
-				log.Info().Msg("Context done, shutting down")
+				s.log.Info().Msg("Context done, shutting down")
 				if err := s.srv.Shutdown(ctx); err != nil {
-					log.Warn().Err(err).Msg("Failed to shutdown service")
+					s.log.Warn().Err(err).Msg("Failed to shutdown service")
 				}
+
 				return
 			}
 		}

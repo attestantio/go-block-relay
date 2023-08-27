@@ -20,7 +20,7 @@ import (
 	"github.com/attestantio/go-block-relay/types"
 )
 
-// Service defines the validator registrar service
+// Service defines the validator registrar service.
 type Service interface{}
 
 // ValidatorRegistrationPassthrough is the interface for handling validator registrations with passthrough.

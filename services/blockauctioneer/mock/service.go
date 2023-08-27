@@ -1,4 +1,4 @@
-// Copyright © 2022 Attestant Limited.
+// Copyright © 2022, 2023 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,8 +15,10 @@ package mock
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/attestantio/go-block-relay/services/blockauctioneer"
+	builderclient "github.com/attestantio/go-builder-client"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 )
 
@@ -29,13 +31,16 @@ func New() *Service {
 }
 
 // AuctionBlock obtains the best available use of the block space.
-func (s *Service) AuctionBlock(ctx context.Context,
-	slot phase0.Slot,
-	parentHash phase0.Hash32,
-	pubkey phase0.BLSPubKey,
+func (s *Service) AuctionBlock(_ context.Context,
+	_ phase0.Slot,
+	_ phase0.Hash32,
+	_ phase0.BLSPubKey,
 ) (
 	*blockauctioneer.Results,
 	error,
 ) {
-	return nil, nil
+	return &blockauctioneer.Results{
+		Values:    make(map[string]*big.Int),
+		Providers: make([]builderclient.BuilderBidProvider, 0),
+	}, nil
 }

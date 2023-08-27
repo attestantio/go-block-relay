@@ -1,4 +1,4 @@
-// Copyright © 2022 Attestant Limited.
+// Copyright © 2022, 2023 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -25,25 +25,26 @@ import (
 )
 
 // Service is a metrics service exposing metrics via prometheus.
-type Service struct{}
-
-// module-wide log.
-var log zerolog.Logger
+type Service struct {
+	log zerolog.Logger
+}
 
 // New creates a new prometheus metrics service.
-func New(ctx context.Context, params ...Parameter) (*Service, error) {
+func New(_ context.Context, params ...Parameter) (*Service, error) {
 	parameters, err := parseAndCheckParameters(params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "problem with parameters")
 	}
 
 	// Set logging.
-	log = zerologger.With().Str("service", "metrics").Str("impl", "prometheus").Logger()
+	log := zerologger.With().Str("service", "metrics").Str("impl", "prometheus").Logger()
 	if parameters.logLevel != log.GetLevel() {
 		log = log.Level(parameters.logLevel)
 	}
 
-	s := &Service{}
+	s := &Service{
+		log: log,
+	}
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
@@ -52,7 +53,7 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 			ReadHeaderTimeout: 5 * time.Second,
 		}
 		if err := server.ListenAndServe(); err != nil {
-			log.Warn().Str("metrics_address", parameters.address).Err(err).Msg("Failed to run metrics server")
+			s.log.Warn().Str("metrics_address", parameters.address).Err(err).Msg("Failed to run metrics server")
 		}
 	}()
 

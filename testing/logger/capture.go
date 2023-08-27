@@ -39,6 +39,7 @@ func (c *LogCapture) Write(p []byte) (int, error) {
 	c.mu.Lock()
 	c.entries = append(c.entries, entry)
 	c.mu.Unlock()
+
 	return len(p), nil
 }
 
@@ -50,11 +51,13 @@ func NewLogCapture() *LogCapture {
 	}
 	logger := zerolog.New(c)
 	zerologger.Logger = logger
+
 	return c
 }
 
 // AssertHasEntry checks if there is a log entry with the given string.
 func (c *LogCapture) AssertHasEntry(t *testing.T, msg string) {
+	t.Helper()
 	assert.True(t, c.HasLog(map[string]interface{}{
 		"message": msg,
 	}))
@@ -75,14 +78,17 @@ func (c *LogCapture) HasLog(fields map[string]interface{}) bool {
 		}
 		if matches == len(fields) {
 			matched = true
+
 			break
 		}
 	}
+
 	return matched
 }
 
 // hasField returns true if the entry has a matching field.
-// nolint:gocyclo
+//
+//nolint:gocyclo
 func (*LogCapture) hasField(entry map[string]interface{}, key string, value interface{}) bool {
 	for entryKey, entryValue := range entry {
 		if entryKey != key {

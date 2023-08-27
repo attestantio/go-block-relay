@@ -30,10 +30,10 @@ func NewErroring() *ErroringService {
 }
 
 // BuilderBid provides a builder bid.
-func (s *ErroringService) BuilderBid(ctx context.Context,
-	slot phase0.Slot,
-	parentHash phase0.Hash32,
-	pubkey phase0.BLSPubKey,
+func (s *ErroringService) BuilderBid(_ context.Context,
+	_ phase0.Slot,
+	_ phase0.Hash32,
+	_ phase0.BLSPubKey,
 ) (
 	*spec.VersionedSignedBuilderBid,
 	error,

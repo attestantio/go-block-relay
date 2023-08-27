@@ -23,7 +23,7 @@ import (
 
 var metricsNamespace = "blockrelay"
 
-var requests *prometheus.GaugeVec
+var requests *prometheus.CounterVec
 
 func registerMetrics(ctx context.Context, monitor metrics.Service) error {
 	if requests != nil {
@@ -37,15 +37,16 @@ func registerMetrics(ctx context.Context, monitor metrics.Service) error {
 	if monitor.Presenter() == "prometheus" {
 		return registerPrometheusMetrics(ctx)
 	}
+
 	return nil
 }
 
-func registerPrometheusMetrics(ctx context.Context) error {
-	requests = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+func registerPrometheusMetrics(_ context.Context) error {
+	requests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricsNamespace,
 		Name:      "requests_total",
 		Help:      "Requests",
-	}, []string{"result"})
+	}, []string{"request", "result"})
 	if err := prometheus.Register(requests); err != nil {
 		return errors.Wrap(err, "failed to register requests_total")
 	}
@@ -53,8 +54,8 @@ func registerPrometheusMetrics(ctx context.Context) error {
 	return nil
 }
 
-func requestHandled(result string) {
+func monitorRequestHandled(request string, result string) {
 	if requests != nil {
-		requests.WithLabelValues(result).Inc()
+		requests.WithLabelValues(request, result).Inc()
 	}
 }

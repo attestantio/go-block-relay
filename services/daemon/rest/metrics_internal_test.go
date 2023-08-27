@@ -26,7 +26,7 @@ func TestRegisterMetrics(t *testing.T) {
 	ctx := context.Background()
 
 	// Ensure metrics handler can be called without failing.
-	requestHandled("success")
+	monitorRequestHandled("test", "success")
 
 	// Ensure metrics can be registered without monitor.
 	require.NoError(t, registerMetrics(ctx, nil))
@@ -49,5 +49,5 @@ func TestRegisterMetrics(t *testing.T) {
 	require.EqualError(t, registerPrometheusMetrics(ctx), "failed to register requests_total: duplicate metrics collector registration attempted")
 
 	// Ensure metrics handler can be called without failing.
-	requestHandled("success")
+	monitorRequestHandled("test", "success")
 }

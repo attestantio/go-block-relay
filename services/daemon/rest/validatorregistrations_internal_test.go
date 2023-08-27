@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSetBlockDelay(t *testing.T) {
+func TestValidatorRegistrations(t *testing.T) {
 	ctx := context.Background()
 
 	registrar := mockvalidatorregistrar.New()
@@ -67,22 +67,18 @@ func TestSetBlockDelay(t *testing.T) {
 		statusCode int
 	}{
 		{
-			name:    "Good",
-			service: service,
-			request: &http.Request{
-				// Body: io.NopCloser(strings.NewReader(`{"source":"client","method":"block event","slot":"123","delay_ms":"12345"}`)),
-			},
+			name:       "Good",
+			service:    service,
+			request:    &http.Request{},
 			writer:     httptest.NewRecorder(),
 			statusCode: http.StatusOK,
 		},
 		{
-			name:    "Erroring",
-			service: erroringService,
-			request: &http.Request{
-				// Body: io.NopCloser(strings.NewReader(`{"source":"client","method":"block event","slot":"123","delay_ms":"12345"}`)),
-			},
+			name:       "Erroring",
+			service:    erroringService,
+			request:    &http.Request{},
 			writer:     httptest.NewRecorder(),
-			statusCode: http.StatusInternalServerError,
+			statusCode: http.StatusBadRequest,
 		},
 	}
 

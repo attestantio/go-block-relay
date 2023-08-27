@@ -21,6 +21,8 @@ import (
 )
 
 // NewGinLogger creates a gin logger using the supplied zerolog.
+//
+//nolint:zerologlint
 func NewGinLogger(log zerolog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		started := time.Now()

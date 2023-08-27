@@ -27,9 +27,11 @@ type Service interface{}
 
 // Results provides the results of the auction process.
 type Results struct {
-	// Values is a map of builder client=>value.
+	// Values is a map of provider=>value.
 	Values map[string]*big.Int
-	// Providers is used to unblind the block.
+	// AllProviders is the list of providers that were queried for bids.
+	AllProviders []builderclient.BuilderBidProvider
+	// Providers is the list of providers that returned the winning bid.
 	Providers []builderclient.BuilderBidProvider
 	// Bid is the winning signed builder bid.
 	Bid *spec.VersionedSignedBuilderBid
