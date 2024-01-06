@@ -26,12 +26,12 @@ import (
 // LogCapture allows testing code to query log output.
 type LogCapture struct {
 	mu      sync.Mutex
-	entries []map[string]interface{}
+	entries []map[string]any
 }
 
 // Write captures an individual log message.
 func (c *LogCapture) Write(p []byte) (int, error) {
-	entry := make(map[string]interface{})
+	entry := make(map[string]any)
 	err := json.Unmarshal(p, &entry)
 	if err != nil {
 		return -1, err
@@ -47,7 +47,7 @@ func (c *LogCapture) Write(p []byte) (int, error) {
 // Logs are created in JSON format and without timestamps.
 func NewLogCapture() *LogCapture {
 	c := &LogCapture{
-		entries: make([]map[string]interface{}, 0),
+		entries: make([]map[string]any, 0),
 	}
 	logger := zerolog.New(c)
 	zerologger.Logger = logger
@@ -58,13 +58,13 @@ func NewLogCapture() *LogCapture {
 // AssertHasEntry checks if there is a log entry with the given string.
 func (c *LogCapture) AssertHasEntry(t *testing.T, msg string) {
 	t.Helper()
-	assert.True(t, c.HasLog(map[string]interface{}{
+	assert.True(t, c.HasLog(map[string]any{
 		"message": msg,
 	}))
 }
 
 // HasLog returns true if there is a log entry with the matching fields.
-func (c *LogCapture) HasLog(fields map[string]interface{}) bool {
+func (c *LogCapture) HasLog(fields map[string]any) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -88,8 +88,8 @@ func (c *LogCapture) HasLog(fields map[string]interface{}) bool {
 
 // hasField returns true if the entry has a matching field.
 //
-//nolint:gocyclo
-func (*LogCapture) hasField(entry map[string]interface{}, key string, value interface{}) bool {
+//nolint:gocyclo,cyclop,gocognit
+func (*LogCapture) hasField(entry map[string]any, key string, value any) bool {
 	for entryKey, entryValue := range entry {
 		if entryKey != key {
 			continue
@@ -100,7 +100,7 @@ func (*LogCapture) hasField(entry map[string]interface{}, key string, value inte
 				return true
 			}
 		case string:
-			if entryValue == value.(string) {
+			if entryValue == v {
 				return true
 			}
 		case int:
@@ -160,6 +160,6 @@ func (*LogCapture) hasField(entry map[string]interface{}, key string, value inte
 }
 
 // Entries returns all captures log entries.
-func (c *LogCapture) Entries() []map[string]interface{} {
+func (c *LogCapture) Entries() []map[string]any {
 	return c.entries
 }

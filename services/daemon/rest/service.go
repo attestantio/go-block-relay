@@ -15,7 +15,6 @@ package rest
 
 import (
 	"context"
-	"crypto/tls"
 	"net/http"
 	"os"
 	"os/signal"
@@ -30,7 +29,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	zerologger "github.com/rs/zerolog/log"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 // Service is the REST daemon service.
@@ -41,7 +39,7 @@ type Service struct {
 	builderBidProvider builderbidprovider.Service
 }
 
-// New creates a new JSON-RPC daemon service.
+// New creates a new REST daemon service.
 func New(ctx context.Context, params ...Parameter) (*Service, error) {
 	parameters, err := parseAndCheckParameters(params...)
 	if err != nil {
@@ -64,6 +62,17 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 		builderBidProvider: parameters.builderBidProvider,
 	}
 
+	if err := s.startServer(ctx, parameters.serverName, parameters.listenAddress); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func (s *Service) startServer(ctx context.Context,
+	_ string,
+	listenAddress string,
+) error {
 	// Set to release mode to remove debug logging.
 	gin.SetMode(gin.ReleaseMode)
 
@@ -71,9 +80,9 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	if err := r.SetTrustedProxies(nil); err != nil {
-		return nil, errors.Wrap(err, "failed to set trusted proxies")
+		return errors.Wrap(err, "failed to set trusted proxies")
 	}
-	r.Use(loggers.NewGinLogger(log))
+	r.Use(loggers.NewGinLogger(s.log))
 
 	router := mux.NewRouter()
 	router.HandleFunc("/eth/v1/builder/validators", s.postValidatorRegistrations).Methods("POST")
@@ -81,91 +90,93 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 	router.HandleFunc("/eth/v1/builder/status", s.getStatus).Methods("GET")
 
 	s.srv = &http.Server{
-		Addr:              parameters.listenAddress,
+		Addr:              listenAddress,
 		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	// At current the service does not run over HTTPS.
-	if false {
-		certManager := autocert.Manager{
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(parameters.serverName),
-			Cache:      autocert.DirCache("./certs"),
-		}
-
-		s.srv.TLSConfig = &tls.Config{
-			MinVersion:               tls.VersionTLS13,
-			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
-			GetCertificate:           certManager.GetCertificate,
-			PreferServerCipherSuites: true,
-			CipherSuites: []uint16{
-				tls.TLS_AES_128_GCM_SHA256,
-				tls.TLS_CHACHA20_POLY1305_SHA256,
-				tls.TLS_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-			},
-		}
-		s.srv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
-
-		// Listen on HTTP port for certificate updates.
-		go func() {
-			s.log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting certificate update service")
-			server := &http.Server{
-				Addr:              ":http",
-				Handler:           certManager.HTTPHandler(nil),
-				ReadHeaderTimeout: 5 * time.Second,
-			}
-			if err := server.ListenAndServe(); err != nil {
-				s.log.Error().Err(err).Msg("Certificate update service stopped")
-			}
-		}()
-
-		go func() {
-			s.log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting daemon")
-			if err := s.srv.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
-				// if err := s.srv.ListenAndServe(); err != http.ErrServerClosed {
-				s.log.Error().Err(err).Msg("Server shut down unexpectedly")
-			}
-		}()
-	} else {
-		// Insecure.
-		go func() {
-			s.log.Trace().Str("listen_address", parameters.listenAddress).Msg("Starting daemon")
-			if err := s.srv.ListenAndServe(); err != nil {
-				s.log.Error().Err(err).Msg("HTTP server shut down")
-			}
-		}()
-	}
-
+	//	if false {
+	//		certManager := autocert.Manager{
+	//			Prompt:     autocert.AcceptTOS,
+	//			HostPolicy: autocert.HostWhitelist(serverName),
+	//			Cache:      autocert.DirCache("./certs"),
+	//		}
+	//
+	//		s.srv.TLSConfig = &tls.Config{
+	//			MinVersion:               tls.VersionTLS13,
+	//			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+	//			GetCertificate:           certManager.GetCertificate,
+	//			PreferServerCipherSuites: true,
+	//			CipherSuites: []uint16{
+	//				tls.TLS_AES_128_GCM_SHA256,
+	//				tls.TLS_CHACHA20_POLY1305_SHA256,
+	//				tls.TLS_AES_256_GCM_SHA384,
+	//				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	//				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	//				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+	//				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	//				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	//				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+	//			},
+	//		}
+	//		s.srv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
+	//
+	//		// Listen on HTTP port for certificate updates.
+	//		go func() {
+	//			s.log.Trace().Str("listen_address", listenAddress).Msg("Starting certificate update service")
+	//			server := &http.Server{
+	//				Addr:              ":http",
+	//				Handler:           certManager.HTTPHandler(nil),
+	//				ReadHeaderTimeout: 5 * time.Second,
+	//			}
+	//			if err := server.ListenAndServe(); err != nil {
+	//				s.log.Error().Err(err).Msg("Certificate update service stopped")
+	//			}
+	//		}()
+	//
+	//		go func() {
+	//			s.log.Trace().Str("listen_address", listenAddress).Msg("Starting HTTPS daemon")
+	//			if err := s.srv.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
+	//				// if err := s.srv.ListenAndServe(); err != http.ErrServerClosed {
+	//				s.log.Error().Err(err).Msg("Server shut down unexpectedly")
+	//			}
+	//		}()
+	//	} else {
+	// Insecure.
 	go func() {
-		sigCh := make(chan os.Signal, 1)
-		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-		for {
-			select {
-			case sig := <-sigCh:
-				if sig == syscall.SIGINT || sig == syscall.SIGTERM || sig == os.Interrupt || sig == os.Kill {
-					s.log.Info().Msg("Received signal, shutting down")
-					if err := s.srv.Shutdown(ctx); err != nil {
-						s.log.Warn().Err(err).Msg("Failed to shutdown service")
-					}
+		s.log.Trace().Str("listen_address", listenAddress).Msg("Starting HTTP daemon")
+		if err := s.srv.ListenAndServe(); err != nil {
+			s.log.Error().Err(err).Msg("HTTP server shut down")
+		}
+	}()
+	// }
 
-					return
-				}
-			case <-ctx.Done():
-				s.log.Info().Msg("Context done, shutting down")
+	go s.sigloop(ctx)
+
+	return nil
+}
+
+func (s *Service) sigloop(ctx context.Context) {
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	for {
+		select {
+		case sig := <-sigCh:
+			if sig == syscall.SIGINT || sig == syscall.SIGTERM || sig == os.Interrupt || sig == os.Kill {
+				s.log.Info().Msg("Received signal, shutting down")
 				if err := s.srv.Shutdown(ctx); err != nil {
 					s.log.Warn().Err(err).Msg("Failed to shutdown service")
 				}
 
 				return
 			}
-		}
-	}()
+		case <-ctx.Done():
+			s.log.Info().Msg("Context done, shutting down")
+			if err := s.srv.Shutdown(ctx); err != nil {
+				s.log.Warn().Err(err).Msg("Failed to shutdown service")
+			}
 
-	return s, nil
+			return
+		}
+	}
 }

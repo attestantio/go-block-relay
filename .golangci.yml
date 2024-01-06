@@ -126,20 +126,15 @@ linters:
   # Disable specific linter
   # https://golangci-lint.run/usage/linters/#disabled-by-default
   disable:
-    - cyclop
     - deadcode
-    - decorder
     - depguard
-    - dupl
     - exhaustive
     - exhaustivestruct
     - exhaustruct
-    - forbidigo
     - forcetypeassert
     - funlen
     - gci
     - gochecknoglobals
-    - gocognit
     - goerr113
     - golint
     - gomnd
@@ -147,10 +142,10 @@ linters:
     - interfacer
     - ireturn
     - lll
-    - maintidx
     - maligned
     - musttag
     - nosnakecase
+    - perfsprint
     - scopelint
     - structcheck
     - varcheck
