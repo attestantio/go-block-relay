@@ -3,12 +3,13 @@ module github.com/attestantio/go-block-relay
 go 1.20
 
 require (
-	github.com/attestantio/go-builder-client v0.4.2
+	github.com/attestantio/go-builder-client v0.4.3
 	github.com/attestantio/go-eth2-client v0.19.10
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/ferranbt/fastssz v0.1.3
 	github.com/gin-gonic/gin v1.9.1
-	github.com/goccy/go-yaml v1.11.3
+	// go-yaml after 1.9.2 has memory issues due to https://github.com/goccy/go-yaml/issues/325; avoid.
+	github.com/goccy/go-yaml v1.9.2
 	github.com/gorilla/mux v1.8.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.18.0
