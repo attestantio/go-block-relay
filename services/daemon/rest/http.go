@@ -1,4 +1,4 @@
-// Copyright © 2022, 204 Attestant Limited.
+// Copyright © 2022, 2024 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -26,16 +26,27 @@ type APIResponse struct {
 
 // sendResponse is a helper to send a JSON response.
 func (s *Service) sendResponse(w http.ResponseWriter, statusCode int, resp any) {
+	if resp == nil {
+		// No response to send.
+		w.WriteHeader(statusCode)
+
+		return
+	}
+
+	data, err := json.Marshal(resp)
+	if err != nil {
+		s.log.Error().Err(err).Msg("Failed to marshal response")
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	if resp != nil {
-		w.Header().Set("Content-Type", "application/json")
-		data, err := json.Marshal(resp)
-		if err != nil {
-			s.log.Error().Err(err).Msg("Failed to marshal response")
-		}
-		_, err = w.Write(data)
-		if err != nil {
-			s.log.Error().Err(err).Msg("Failed to write response")
-		}
+	_, err = w.Write(data)
+	if err != nil {
+		s.log.Error().Err(err).Msg("Failed to write response")
+
+		return
 	}
 }
