@@ -1,4 +1,4 @@
-// Copyright © 2022, 2024 Attestant Limited.
+// Copyright © 2024 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -11,21 +11,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package blockunblinder
+package mock
 
 import (
 	"context"
+	"errors"
 
 	"github.com/attestantio/go-eth2-client/api"
 )
 
-// Service defines the block unblinder service.
-type Service interface {
-	// UnblindBlock unblinds the given block.
-	UnblindBlock(ctx context.Context,
-		block *api.VersionedSignedBlindedBeaconBlock,
-	) (
-		*api.VersionedSignedProposal,
-		error,
-	)
+// ErroringService is a mock block unblinder.
+type ErroringService struct{}
+
+// NewErroring creates a new mock block unblinder.
+func NewErroring() *ErroringService {
+	return &ErroringService{}
+}
+
+// UnblindBlock unblinds the given block.
+func (s *ErroringService) UnblindBlock(_ context.Context,
+	_ *api.VersionedSignedBlindedBeaconBlock,
+) (
+	*api.VersionedSignedProposal,
+	error,
+) {
+	return nil, errors.New("error")
 }

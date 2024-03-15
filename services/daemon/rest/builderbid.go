@@ -1,4 +1,4 @@
-// Copyright © 2022, 204 Attestant Limited.
+// Copyright © 2022, 2024 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,11 +15,13 @@ package rest
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
+	relay "github.com/attestantio/go-block-relay"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/gorilla/mux"
 )
@@ -70,9 +72,13 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 
 	bid, err := s.builderBidProvider.BuilderBid(r.Context(), slot, parentHash, pubkey)
 	if err != nil {
+		code := http.StatusInternalServerError
+		if errors.Is(err, relay.ErrInvalidOptions) {
+			code = http.StatusBadRequest
+		}
 		s.log.Error().Err(err).Msg("Failed to obtain bid")
 		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
-			Code:    http.StatusInternalServerError,
+			Code:    code,
 			Message: "Failed to obtain bid",
 		})
 		monitorRequestHandled("builder bid", "failure")

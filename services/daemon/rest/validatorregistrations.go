@@ -1,4 +1,4 @@
-// Copyright © 2022 Attestant Limited.
+// Copyright © 2022, 2024 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"strings"
 
+	relay "github.com/attestantio/go-block-relay"
 	"github.com/attestantio/go-block-relay/services/validatorregistrar"
 	"github.com/attestantio/go-block-relay/types"
 	"github.com/pkg/errors"
@@ -73,8 +74,12 @@ func (s *Service) postValidatorRegistrationsPassthrough(ctx context.Context,
 	registrationErrors, err := provider.ValidatorRegistrationsPassthrough(ctx, r.Body)
 	if err != nil {
 		s.log.Error().Err(err).Msg("Failed to register validators with passthrough")
+		code := http.StatusInternalServerError
+		if errors.Is(err, relay.ErrInvalidOptions) {
+			code = http.StatusBadRequest
+		}
 
-		return http.StatusInternalServerError, nil, errors.New("failed to register validators")
+		return code, nil, errors.New("failed to register validators")
 	}
 
 	return http.StatusOK, registrationErrors, nil
@@ -99,8 +104,12 @@ func (s *Service) postValidatorRegistrationsHandler(ctx context.Context,
 	registrationErrors, err := provider.ValidatorRegistrations(ctx, registrations)
 	if err != nil {
 		s.log.Error().Err(err).Msg("Failed to register validators")
+		code := http.StatusInternalServerError
+		if errors.Is(err, relay.ErrInvalidOptions) {
+			code = http.StatusBadRequest
+		}
 
-		return http.StatusInternalServerError, nil, errors.Wrap(err, "failed to register validators")
+		return code, nil, errors.Wrap(err, "failed to register validators")
 	}
 
 	return http.StatusOK, registrationErrors, nil

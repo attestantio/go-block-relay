@@ -1,4 +1,4 @@
-// Copyright © 2022 Attestant Limited.
+// Copyright © 2022, 2024 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -17,6 +17,7 @@ import (
 	"errors"
 
 	"github.com/attestantio/go-block-relay/services/blockauctioneer"
+	"github.com/attestantio/go-block-relay/services/blockunblinder"
 	"github.com/attestantio/go-block-relay/services/builderbidprovider"
 	"github.com/attestantio/go-block-relay/services/metrics"
 	nullmetrics "github.com/attestantio/go-block-relay/services/metrics/null"
@@ -32,6 +33,7 @@ type parameters struct {
 	validatorRegistrar validatorregistrar.Service
 	blockAuctioneer    blockauctioneer.Service
 	builderBidProvider builderbidprovider.Service
+	blockUnblinder     blockunblinder.Service
 }
 
 // Parameter is the interface for service parameters.
@@ -94,6 +96,13 @@ func WithBlockAuctioneer(blockAuctioneer blockauctioneer.Service) Parameter {
 	})
 }
 
+// WithBlockUnblinder sets the block unblinder.
+func WithBlockUnblinder(blockUnblinder blockunblinder.Service) Parameter {
+	return parameterFunc(func(p *parameters) {
+		p.blockUnblinder = blockUnblinder
+	})
+}
+
 // parseAndCheckParameters parses and checks parameters to ensure that mandatory parameters are present and correct.
 func parseAndCheckParameters(params ...Parameter) (*parameters, error) {
 	parameters := parameters{
@@ -121,6 +130,9 @@ func parseAndCheckParameters(params ...Parameter) (*parameters, error) {
 	}
 	if parameters.blockAuctioneer == nil {
 		return nil, errors.New("no block auctioneer specified")
+	}
+	if parameters.blockUnblinder == nil {
+		return nil, errors.New("no block unblinder specified")
 	}
 	if parameters.builderBidProvider == nil {
 		return nil, errors.New("no builder bid provider specified")

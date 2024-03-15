@@ -1,4 +1,4 @@
-// Copyright © 2022 Attestant Limited.
+// Copyright © 2022, 2024 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/attestantio/go-block-relay/loggers"
+	"github.com/attestantio/go-block-relay/services/blockunblinder"
 	"github.com/attestantio/go-block-relay/services/builderbidprovider"
 	"github.com/attestantio/go-block-relay/services/validatorregistrar"
 	"github.com/gin-gonic/gin"
@@ -37,6 +38,7 @@ type Service struct {
 	srv                *http.Server
 	validatorRegistrar validatorregistrar.Service
 	builderBidProvider builderbidprovider.Service
+	blockUnblinder     blockunblinder.Service
 }
 
 // New creates a new REST daemon service.
@@ -60,6 +62,7 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 		log:                log,
 		validatorRegistrar: parameters.validatorRegistrar,
 		builderBidProvider: parameters.builderBidProvider,
+		blockUnblinder:     parameters.blockUnblinder,
 	}
 
 	if err := s.startServer(ctx, parameters.serverName, parameters.listenAddress); err != nil {
@@ -88,6 +91,8 @@ func (s *Service) startServer(ctx context.Context,
 	router.HandleFunc("/eth/v1/builder/validators", s.postValidatorRegistrations).Methods("POST")
 	router.HandleFunc("/eth/v1/builder/header/{slot}/{parenthash}/{pubkey}", s.getBuilderBid).Methods("GET")
 	router.HandleFunc("/eth/v1/builder/status", s.getStatus).Methods("GET")
+	router.HandleFunc("/eth/v1/builder/blinded_blocks", s.postUnblindBlock).Methods("POST")
+	router.PathPrefix("/").Handler(s)
 
 	s.srv = &http.Server{
 		Addr:              listenAddress,
@@ -179,4 +184,10 @@ func (s *Service) sigloop(ctx context.Context) {
 			return
 		}
 	}
+}
+
+func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.log.Debug().Str("method", r.Method).Stringer("url", r.URL).Msg("Unhandled request")
+
+	w.WriteHeader(http.StatusNotFound)
 }

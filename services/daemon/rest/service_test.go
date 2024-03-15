@@ -1,4 +1,4 @@
-// Copyright © 2022 Attestant Limited.
+// Copyright © 2022, 2024 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import (
 	"time"
 
 	mockauctioneer "github.com/attestantio/go-block-relay/services/blockauctioneer/mock"
+	mockblockunblinder "github.com/attestantio/go-block-relay/services/blockunblinder/mock"
 	mockbuilderbidprovider "github.com/attestantio/go-block-relay/services/builderbidprovider/mock"
 	restdaemon "github.com/attestantio/go-block-relay/services/daemon/rest"
 	nullmetrics "github.com/attestantio/go-block-relay/services/metrics/null"
@@ -33,6 +34,7 @@ func TestService(t *testing.T) {
 	registrar := mockregistrar.New()
 	auctioneer := mockauctioneer.New()
 	monitor := nullmetrics.New()
+	unblinder := mockblockunblinder.New()
 	builderBidProvider := mockbuilderbidprovider.New()
 
 	tests := []struct {
@@ -48,6 +50,7 @@ func TestService(t *testing.T) {
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBlockUnblinder(unblinder),
 				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 			err: "problem with parameters: no monitor specified",
@@ -59,6 +62,7 @@ func TestService(t *testing.T) {
 				restdaemon.WithMonitor(monitor),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBlockUnblinder(unblinder),
 				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 			err: "problem with parameters: no listen address specified",
@@ -70,6 +74,7 @@ func TestService(t *testing.T) {
 				restdaemon.WithMonitor(monitor),
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBlockUnblinder(unblinder),
 				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 			err: "problem with parameters: no validator registrar specified",
@@ -81,6 +86,7 @@ func TestService(t *testing.T) {
 				restdaemon.WithMonitor(monitor),
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
+				restdaemon.WithBlockUnblinder(unblinder),
 				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 			err: "problem with parameters: no block auctioneer specified",
@@ -93,8 +99,21 @@ func TestService(t *testing.T) {
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBlockUnblinder(unblinder),
 			},
 			err: "problem with parameters: no builder bid provider specified",
+		},
+		{
+			name: "BlockUnblindedMissing",
+			params: []restdaemon.Parameter{
+				restdaemon.WithLogLevel(zerolog.Disabled),
+				restdaemon.WithMonitor(monitor),
+				restdaemon.WithListenAddress(":14734"),
+				restdaemon.WithValidatorRegistrar(registrar),
+				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBuilderBidProvider(builderBidProvider),
+			},
+			err: "problem with parameters: no block unblinder specified",
 		},
 		{
 			name: "Good",
@@ -104,6 +123,7 @@ func TestService(t *testing.T) {
 				restdaemon.WithListenAddress(":14734"),
 				restdaemon.WithValidatorRegistrar(registrar),
 				restdaemon.WithBlockAuctioneer(auctioneer),
+				restdaemon.WithBlockUnblinder(unblinder),
 				restdaemon.WithBuilderBidProvider(builderBidProvider),
 			},
 		},
@@ -125,6 +145,7 @@ func TestShutdown(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	registrar := mockregistrar.New()
 	auctioneer := mockauctioneer.New()
+	unblinder := mockblockunblinder.New()
 	monitor := nullmetrics.New()
 	builderBidProvider := mockbuilderbidprovider.New()
 
@@ -134,6 +155,7 @@ func TestShutdown(t *testing.T) {
 		restdaemon.WithListenAddress(":14734"),
 		restdaemon.WithValidatorRegistrar(registrar),
 		restdaemon.WithBlockAuctioneer(auctioneer),
+		restdaemon.WithBlockUnblinder(unblinder),
 		restdaemon.WithBuilderBidProvider(builderBidProvider),
 	)
 	require.NoError(t, err)

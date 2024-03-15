@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	mockauctioneer "github.com/attestantio/go-block-relay/services/blockauctioneer/mock"
+	mockblockunblinder "github.com/attestantio/go-block-relay/services/blockunblinder/mock"
 	mockbuilderbidprovider "github.com/attestantio/go-block-relay/services/builderbidprovider/mock"
 	nullmetrics "github.com/attestantio/go-block-relay/services/metrics/null"
 	mockvalidatorregistrar "github.com/attestantio/go-block-relay/services/validatorregistrar/mock"
@@ -32,6 +33,7 @@ func TestValidatorRegistrations(t *testing.T) {
 
 	registrar := mockvalidatorregistrar.New()
 	auctioneer := mockauctioneer.New()
+	unblinder := mockblockunblinder.New()
 	monitor := nullmetrics.New()
 	builderBidProvider := mockbuilderbidprovider.New()
 
@@ -42,6 +44,7 @@ func TestValidatorRegistrations(t *testing.T) {
 		WithListenAddress(":14734"),
 		WithValidatorRegistrar(registrar),
 		WithBlockAuctioneer(auctioneer),
+		WithBlockUnblinder(unblinder),
 		WithBuilderBidProvider(builderBidProvider),
 	)
 	require.NoError(t, err)
@@ -55,6 +58,7 @@ func TestValidatorRegistrations(t *testing.T) {
 		WithValidatorRegistrar(registrar),
 		WithValidatorRegistrar(erroringRegistrar),
 		WithBlockAuctioneer(auctioneer),
+		WithBlockUnblinder(unblinder),
 		WithBuilderBidProvider(builderBidProvider),
 	)
 	require.NoError(t, err)
