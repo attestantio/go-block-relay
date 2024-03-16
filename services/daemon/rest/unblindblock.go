@@ -103,7 +103,7 @@ func (s *Service) obtainUnblindedBlock(ctx context.Context,
 	}
 
 	for k, v := range r.Header {
-		s.log.Info().Str("key", k).Strs("values", v).Msg("Header")
+		s.log.Trace().Str("key", k).Strs("values", v).Msg("Header")
 	}
 
 	// Obtain the consensus version so we know what we have to unmarshal to.
