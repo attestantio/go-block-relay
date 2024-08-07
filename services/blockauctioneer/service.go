@@ -1,4 +1,4 @@
-// Copyright © 2022 Attestant Limited.
+// Copyright © 2022, 2024 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -27,13 +27,25 @@ type Service interface{}
 
 // Results provides the results of the auction process.
 type Results struct {
-	// Values is a map of provider=>value.
-	Values map[string]*big.Int
+	// Participation contains details of each provider's participation.
+	// There is only a single result per provider, being that with the highest score.
+	Participation map[string]*Participation
 	// AllProviders is the list of providers that were queried for bids.
 	AllProviders []builderclient.BuilderBidProvider
+	// WinningParticipation is the current winning bid amongst all participants.
+	WinningParticipation *Participation
 	// Providers is the list of providers that returned the winning bid.
 	Providers []builderclient.BuilderBidProvider
-	// Bid is the winning signed builder bid.
+}
+
+// Participation provide detailed information about a relay's participation in the auction process.
+type Participation struct {
+	// Category is the category of the bid.
+	// This is free-form text, and could for example be "Priority", "Excluded" etc.
+	Category string
+	// Score is the eligibility score.
+	Score *big.Int
+	// Bid is the signed builder bid.
 	Bid *spec.VersionedSignedBuilderBid
 }
 
