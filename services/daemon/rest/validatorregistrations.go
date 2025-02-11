@@ -1,4 +1,4 @@
-// Copyright © 2022, 2024 Attestant Limited.
+// Copyright © 2022 - 2025 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -16,6 +16,7 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -39,11 +40,12 @@ func (s *Service) postValidatorRegistrations(w http.ResponseWriter, r *http.Requ
 		statusCode, registrationErrors, err = s.postValidatorRegistrationsHandler(r.Context(), r, handler)
 	default:
 		s.log.Error().Msg("Request not supported by service")
+		statusCode = http.StatusInternalServerError
 		err = errors.New("Request not supported by service")
 	}
 
 	if err != nil {
-		s.sendResponse(w, http.StatusBadRequest, &APIResponse{
+		s.sendResponse(w, statusCode, &APIResponse{
 			Code:    statusCode,
 			Message: err.Error(),
 		})
@@ -93,12 +95,18 @@ func (s *Service) postValidatorRegistrationsHandler(ctx context.Context,
 	[]string,
 	error,
 ) {
-	// We need to unmarshal the request body ourselves.
-	registrations := make([]*types.SignedValidatorRegistration, 0)
-	if err := json.NewDecoder(r.Body).Decode(&registrations); err != nil {
-		s.log.Debug().Err(err).Msg("Supplied with invalid data")
+	var registrations []*types.SignedValidatorRegistration
+	var err error
 
-		return http.StatusBadRequest, nil, errors.Wrap(err, "invalid JSON")
+	contentType := s.obtainContentType(ctx, r)
+	switch contentType {
+	case "application/json":
+		registrations, err = s.postValidatorRegistrationsHandlerJSON(ctx, r)
+	default:
+		return http.StatusUnsupportedMediaType, nil, fmt.Errorf("content type %s not supported", contentType)
+	}
+	if err != nil {
+		return http.StatusBadRequest, nil, err
 	}
 
 	registrationErrors, err := provider.ValidatorRegistrations(ctx, registrations)
@@ -113,4 +121,21 @@ func (s *Service) postValidatorRegistrationsHandler(ctx context.Context,
 	}
 
 	return http.StatusOK, registrationErrors, nil
+}
+
+func (s *Service) postValidatorRegistrationsHandlerJSON(_ context.Context,
+	r *http.Request,
+) (
+	[]*types.SignedValidatorRegistration,
+	error,
+) {
+	// We need to unmarshal the request body ourselves.
+	registrations := make([]*types.SignedValidatorRegistration, 0)
+	if err := json.NewDecoder(r.Body).Decode(&registrations); err != nil {
+		s.log.Debug().Err(err).Msg("Supplied with invalid data")
+
+		return nil, errors.Wrap(err, "invalid JSON")
+	}
+
+	return registrations, nil
 }
