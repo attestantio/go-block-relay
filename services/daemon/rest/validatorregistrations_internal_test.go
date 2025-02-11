@@ -1,4 +1,4 @@
-// Copyright © 2022 Attestant Limited.
+// Copyright © 2022, 2025 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,7 +14,9 @@
 package rest
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -82,7 +84,91 @@ func TestValidatorRegistrations(t *testing.T) {
 			service:    erroringService,
 			request:    &http.Request{},
 			writer:     httptest.NewRecorder(),
-			statusCode: http.StatusBadRequest,
+			statusCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			test.service.postValidatorRegistrations(test.writer, test.request)
+			require.Equal(t, test.statusCode, test.writer.Result().StatusCode)
+		})
+	}
+}
+
+func TestValidatorRegistrationsContentType(t *testing.T) {
+	ctx := context.Background()
+
+	registrar := mockvalidatorregistrar.NewHandler()
+	auctioneer := mockauctioneer.New()
+	unblinder := mockblockunblinder.New()
+	monitor := nullmetrics.New()
+	builderBidProvider := mockbuilderbidprovider.New()
+
+	service, err := New(ctx,
+		WithLogLevel(zerolog.Disabled),
+		WithMonitor(monitor),
+		WithServerName("server.attestant.io"),
+		WithListenAddress(":14734"),
+		WithValidatorRegistrar(registrar),
+		WithBlockAuctioneer(auctioneer),
+		WithBlockUnblinder(unblinder),
+		WithBuilderBidProvider(builderBidProvider),
+	)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name       string
+		service    *Service
+		request    *http.Request
+		writer     *httptest.ResponseRecorder
+		statusCode int
+	}{
+		{
+			name:    "NoContentType",
+			service: service,
+			request: &http.Request{
+				Header: map[string][]string{},
+				Body:   io.NopCloser(bytes.NewReader([]byte("[]"))),
+			},
+			writer:     httptest.NewRecorder(),
+			statusCode: http.StatusOK,
+		},
+		{
+			name:    "JSON",
+			service: service,
+			request: &http.Request{
+				Header: map[string][]string{
+					"Content": {"application/json"},
+				},
+				Body: io.NopCloser(bytes.NewReader([]byte("[]"))),
+			},
+			writer:     httptest.NewRecorder(),
+			statusCode: http.StatusOK,
+		},
+		{
+			name:    "JSONCharset",
+			service: service,
+			request: &http.Request{
+				Header: map[string][]string{
+					"Content-Type": {"application/json; charset=utf-8"},
+				},
+				Body: io.NopCloser(bytes.NewReader([]byte("[]"))),
+			},
+			writer:     httptest.NewRecorder(),
+			statusCode: http.StatusOK,
+		},
+		{
+			name:    "Bad",
+			service: service,
+			request: &http.Request{
+				Header: map[string][]string{
+					"Content-Type": {"application/garbage"},
+				},
+				Body: io.NopCloser(bytes.NewReader([]byte("[]"))),
+			},
+			writer:     httptest.NewRecorder(),
+			statusCode: http.StatusUnsupportedMediaType,
 		},
 	}
 
