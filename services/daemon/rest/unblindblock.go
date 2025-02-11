@@ -1,4 +1,4 @@
-// Copyright © 2024 Attestant Limited.
+// Copyright © 2024, 2025 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -26,6 +26,7 @@ import (
 	apiv1bellatrix "github.com/attestantio/go-eth2-client/api/v1/bellatrix"
 	apiv1capella "github.com/attestantio/go-eth2-client/api/v1/capella"
 	apiv1deneb "github.com/attestantio/go-eth2-client/api/v1/deneb"
+	apiv1electra "github.com/attestantio/go-eth2-client/api/v1/electra"
 	"github.com/attestantio/go-eth2-client/spec"
 	"github.com/attestantio/go-eth2-client/spec/deneb"
 	"github.com/pkg/errors"
@@ -37,10 +38,10 @@ func (s *Service) postUnblindBlock(w http.ResponseWriter, r *http.Request) {
 
 	signedBlindedBeaconBlock, err := s.obtainUnblindedBlock(ctx, r)
 	if err != nil {
-		s.log.Error().Err(err).Msg("Supplied with invalid block")
+		s.log.Error().Err(err).Msg("Unable to obtain unblinded block")
 		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
 			Code:    http.StatusBadRequest,
-			Message: "Invalid blinded block",
+			Message: "Unable to obtain blinded block",
 		})
 		monitorRequestHandled("unblind block", "failure")
 
@@ -92,15 +93,7 @@ func (s *Service) obtainUnblindedBlock(ctx context.Context,
 	*api.VersionedSignedBlindedBeaconBlock,
 	error,
 ) {
-	// Obtain the content type so we know what we have to unmarshal.
-	contentTypes, exists := r.Header["Content-Type"]
-	var contentType string
-	if !exists || len(contentTypes) == 0 {
-		s.log.Debug().Msg("No content type header; assuming JSON")
-		contentType = "application/json"
-	} else {
-		contentType = contentTypes[0]
-	}
+	contentType := s.obtainContentType(ctx, r)
 
 	for k, v := range r.Header {
 		s.log.Trace().Str("key", k).Strs("values", v).Msg("Header")
@@ -110,21 +103,11 @@ func (s *Service) obtainUnblindedBlock(ctx context.Context,
 	consensusVersions, exists := r.Header["Eth-Consensus-Version"]
 	var consensusVersion string
 	if !exists || len(consensusVersions) == 0 {
-		// Various consensus clients do not provide this header.  Remove
-		// assumption when they do.
-		s.log.Debug().Msg("No consensus version header; assuming deneb")
-		consensusVersion = "deneb"
-		//		s.log.Error().Msg("No Eth-Consensus-Version header")
-		//		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
-		//			Code:    http.StatusBadRequest,
-		//			Message: "No Eth-Consensus-Version header",
-		//		})
-		//		monitorRequestHandled("unblind block", "failure")
-		//
-		//		return
-	} else {
-		consensusVersion = consensusVersions[0]
+		s.log.Error().Msg("No Eth-Consensus-Version header")
+
+		return nil, errors.New("No Eth-Consensus-Version header provided")
 	}
+	consensusVersion = consensusVersions[0]
 
 	signedBlindedBeaconBlock, err := s.unmarshalBlindedBlock(ctx, contentType, consensusVersion, r)
 	if err != nil {
@@ -154,6 +137,9 @@ func (s *Service) unmarshalBlindedBlock(ctx context.Context,
 	case "deneb":
 		signedBlindedBeaconBlock.Version = spec.DataVersionDeneb
 		signedBlindedBeaconBlock.Deneb = &apiv1deneb.SignedBlindedBeaconBlock{}
+	case "electra":
+		signedBlindedBeaconBlock.Version = spec.DataVersionElectra
+		signedBlindedBeaconBlock.Electra = &apiv1electra.SignedBlindedBeaconBlock{}
 	default:
 		return nil, fmt.Errorf("unknown block version %v", consensusVersion)
 	}
@@ -184,6 +170,8 @@ func (s *Service) unmarshalBlindedBlockJSON(_ context.Context,
 		err = json.NewDecoder(body).Decode(signedBlindedBeaconBlock.Capella)
 	case spec.DataVersionDeneb:
 		err = json.NewDecoder(body).Decode(signedBlindedBeaconBlock.Deneb)
+	case spec.DataVersionElectra:
+		err = json.NewDecoder(body).Decode(signedBlindedBeaconBlock.Electra)
 	default:
 		err = fmt.Errorf("unsupported block version %v", signedBlindedBeaconBlock.Version)
 	}
@@ -214,6 +202,8 @@ func (s *Service) unmarshalBlindedBlockSSZ(_ context.Context,
 		err = signedBlindedBeaconBlock.Capella.UnmarshalSSZ(data)
 	case spec.DataVersionDeneb:
 		err = signedBlindedBeaconBlock.Deneb.UnmarshalSSZ(data)
+	case spec.DataVersionElectra:
+		err = signedBlindedBeaconBlock.Electra.UnmarshalSSZ(data)
 	default:
 		err = fmt.Errorf("unsupported block version %v", signedBlindedBeaconBlock.Version)
 	}
@@ -257,6 +247,15 @@ func (s *Service) outputUnblindedBlock(_ context.Context,
 				Commitments: proposal.Deneb.SignedBlock.Message.Body.BlobKZGCommitments,
 				Proofs:      proposal.Deneb.KZGProofs,
 				Blobs:       proposal.Deneb.Blobs,
+			},
+		}
+	case spec.DataVersionElectra:
+		resp.Data = &unblindBlockResponseData{
+			ExecutionPayload: proposal.Electra.SignedBlock.Message.Body.ExecutionPayload,
+			BlobsBundle: &unblindBlockResponseBlobsBundle{
+				Commitments: proposal.Electra.SignedBlock.Message.Body.BlobKZGCommitments,
+				Proofs:      proposal.Electra.KZGProofs,
+				Blobs:       proposal.Electra.Blobs,
 			},
 		}
 	default:
