@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -190,4 +191,26 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.log.Debug().Str("method", r.Method).Stringer("url", r.URL).Msg("Unhandled request")
 
 	w.WriteHeader(http.StatusNotFound)
+}
+
+func (s *Service) obtainContentType(_ context.Context,
+	r *http.Request,
+) string {
+	contentTypeHeaderVals, exists := r.Header["Content-Type"]
+	var contentType string
+	if !exists {
+		// Assume that no content type == JSON, for backwards-compatibility.
+		contentType = "application/json"
+	} else {
+		contentType = contentTypeHeaderVals[0]
+	}
+
+	// Remove supplementary information.
+	index := strings.Index(contentType, ";")
+	if index > 0 {
+		contentType = contentType[:index]
+	}
+	contentType = strings.TrimSpace(contentType)
+
+	return contentType
 }
