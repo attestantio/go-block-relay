@@ -1,4 +1,4 @@
-// Copyright © 2022, 2024 Attestant Limited.
+// Copyright © 2022 - 2025 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -34,10 +34,13 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 	tmpInt, err := strconv.ParseUint(vars["slot"], 10, 64)
 	if err != nil {
 		s.log.Debug().Err(err).Str("slot", vars["slot"]).Msg("Invalid slot")
-		s.sendResponse(w, http.StatusBadRequest, &APIResponse{
-			Code:    http.StatusBadRequest,
-			Message: fmt.Sprintf("invalid slot %s", vars["slot"]),
-		})
+		s.sendResponse(w,
+			http.StatusBadRequest,
+			map[string]string{},
+			&APIResponse{
+				Code:    http.StatusBadRequest,
+				Message: fmt.Sprintf("invalid slot %s", vars["slot"]),
+			})
 		monitorRequestHandled("builder bid", "failure")
 
 		return
@@ -46,10 +49,13 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 	tmpBytes, err := hex.DecodeString(strings.TrimPrefix(vars["parenthash"], "0x"))
 	if err != nil {
 		s.log.Debug().Err(err).Str("parenthash", vars["parenthash"]).Msg("Invalid parent hash")
-		s.sendResponse(w, http.StatusBadRequest, &APIResponse{
-			Code:    http.StatusBadRequest,
-			Message: fmt.Sprintf("invalid parent hash %s", vars["parenthash"]),
-		})
+		s.sendResponse(w,
+			http.StatusBadRequest,
+			map[string]string{},
+			&APIResponse{
+				Code:    http.StatusBadRequest,
+				Message: fmt.Sprintf("invalid parent hash %s", vars["parenthash"]),
+			})
 		monitorRequestHandled("builder bid", "failure")
 
 		return
@@ -59,10 +65,13 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 	tmpBytes, err = hex.DecodeString(strings.TrimPrefix(vars["pubkey"], "0x"))
 	if err != nil {
 		s.log.Trace().Err(err).Str("pubkey", vars["pubkey"]).Msg("Invalid public key")
-		s.sendResponse(w, http.StatusBadRequest, &APIResponse{
-			Code:    http.StatusBadRequest,
-			Message: fmt.Sprintf("invalid public key %s", vars["pubkey"]),
-		})
+		s.sendResponse(w,
+			http.StatusBadRequest,
+			map[string]string{},
+			&APIResponse{
+				Code:    http.StatusBadRequest,
+				Message: fmt.Sprintf("invalid public key %s", vars["pubkey"]),
+			})
 		monitorRequestHandled("builder bid", "failure")
 
 		return
@@ -77,10 +86,13 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 			code = http.StatusBadRequest
 		}
 		s.log.Error().Err(err).Msg("Failed to obtain bid")
-		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
-			Code:    code,
-			Message: "Failed to obtain bid",
-		})
+		s.sendResponse(w,
+			http.StatusInternalServerError,
+			map[string]string{},
+			&APIResponse{
+				Code:    code,
+				Message: "Failed to obtain bid",
+			})
 		monitorRequestHandled("builder bid", "failure")
 
 		return
@@ -89,8 +101,18 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 	monitorRequestHandled("builder bid", "success")
 
 	if bid == nil {
-		s.sendResponse(w, http.StatusNoContent, nil)
+		s.sendResponse(w,
+			http.StatusNoContent,
+			map[string]string{},
+			nil,
+		)
 	} else {
-		s.sendResponse(w, http.StatusOK, bid)
+		headers := map[string]string{}
+		headers[EthConsensusVersion] = bid.Version.String()
+		s.sendResponse(w,
+			http.StatusOK,
+			headers,
+			bid,
+		)
 	}
 }

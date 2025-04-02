@@ -1,4 +1,4 @@
-// Copyright © 2022, 2024 Attestant Limited.
+// Copyright © 2022 - 2025 Attestant Limited.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -25,7 +25,11 @@ type APIResponse struct {
 }
 
 // sendResponse is a helper to send a JSON response.
-func (s *Service) sendResponse(w http.ResponseWriter, statusCode int, resp any) {
+func (s *Service) sendResponse(w http.ResponseWriter,
+	statusCode int,
+	headers map[string]string,
+	resp any,
+) {
 	if resp == nil {
 		// No response to send.
 		w.WriteHeader(statusCode)
@@ -42,6 +46,9 @@ func (s *Service) sendResponse(w http.ResponseWriter, statusCode int, resp any) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	for k, v := range headers {
+		w.Header().Set(k, v)
+	}
 	w.WriteHeader(statusCode)
 	_, err = w.Write(data)
 	if err != nil {
