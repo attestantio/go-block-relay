@@ -45,10 +45,13 @@ func (s *Service) postValidatorRegistrations(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err != nil {
-		s.sendResponse(w, statusCode, &APIResponse{
-			Code:    statusCode,
-			Message: err.Error(),
-		})
+		s.sendResponse(w,
+			statusCode,
+			map[string]string{},
+			&APIResponse{
+				Code:    statusCode,
+				Message: err.Error(),
+			})
 		monitorRequestHandled("validator registrations", "failure")
 
 		return
@@ -56,12 +59,19 @@ func (s *Service) postValidatorRegistrations(w http.ResponseWriter, r *http.Requ
 
 	monitorRequestHandled("validator registrations", "success")
 	if len(registrationErrors) == 0 {
-		s.sendResponse(w, http.StatusOK, nil)
+		s.sendResponse(w,
+			http.StatusOK,
+			map[string]string{},
+			nil,
+		)
 	} else {
-		s.sendResponse(w, http.StatusBadRequest, &APIResponse{
-			Code:    http.StatusBadRequest,
-			Message: strings.Join(registrationErrors, ";"),
-		})
+		s.sendResponse(w,
+			http.StatusBadRequest,
+			map[string]string{},
+			&APIResponse{
+				Code:    http.StatusBadRequest,
+				Message: strings.Join(registrationErrors, ";"),
+			})
 	}
 }
 

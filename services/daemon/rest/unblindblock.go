@@ -39,10 +39,13 @@ func (s *Service) postUnblindBlock(w http.ResponseWriter, r *http.Request) {
 	signedBlindedBeaconBlock, err := s.obtainUnblindedBlock(ctx, r)
 	if err != nil {
 		s.log.Error().Err(err).Msg("Unable to obtain unblinded block")
-		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
-			Code:    http.StatusBadRequest,
-			Message: "Unable to obtain blinded block",
-		})
+		s.sendResponse(w,
+			http.StatusInternalServerError,
+			map[string]string{},
+			&APIResponse{
+				Code:    http.StatusBadRequest,
+				Message: "Unable to obtain blinded block",
+			})
 		monitorRequestHandled("unblind block", "failure")
 
 		return
@@ -55,17 +58,24 @@ func (s *Service) postUnblindBlock(w http.ResponseWriter, r *http.Request) {
 			code = http.StatusBadRequest
 		}
 		s.log.Error().Err(err).Msg("Failed to unblind block")
-		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
-			Code:    code,
-			Message: "Failed to unblind block",
-		})
+		s.sendResponse(w,
+			http.StatusInternalServerError,
+			map[string]string{},
+			&APIResponse{
+				Code:    code,
+				Message: "Failed to unblind block",
+			})
 		monitorRequestHandled("unblind block", "failure")
 
 		return
 	}
 
 	if signedProposal == nil {
-		s.sendResponse(w, http.StatusNoContent, nil)
+		s.sendResponse(w,
+			http.StatusNoContent,
+			map[string]string{},
+			nil,
+		)
 		monitorRequestHandled("unblind block", "success")
 
 		return
@@ -74,17 +84,27 @@ func (s *Service) postUnblindBlock(w http.ResponseWriter, r *http.Request) {
 	data, err := s.outputUnblindedBlock(ctx, signedProposal)
 	if err != nil {
 		s.log.Error().Err(err).Msg("Failed to generate output")
-		s.sendResponse(w, http.StatusInternalServerError, &APIResponse{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to unblind block",
-		})
+		s.sendResponse(w,
+			http.StatusInternalServerError,
+			map[string]string{},
+			&APIResponse{
+				Code:    http.StatusInternalServerError,
+				Message: "Failed to unblind block",
+			})
 		monitorRequestHandled("unblind block", "failure")
 
 		return
 	}
 
 	monitorRequestHandled("unblind block", "success")
-	s.sendResponse(w, http.StatusOK, data)
+
+	headers := map[string]string{}
+	headers[EthConsensusVersion] = data.Version.String()
+	s.sendResponse(w,
+		http.StatusOK,
+		headers,
+		data,
+	)
 }
 
 func (s *Service) obtainUnblindedBlock(ctx context.Context,
@@ -100,12 +120,12 @@ func (s *Service) obtainUnblindedBlock(ctx context.Context,
 	}
 
 	// Obtain the consensus version so we know what we have to unmarshal to.
-	consensusVersions, exists := r.Header["Eth-Consensus-Version"]
+	consensusVersions, exists := r.Header[EthConsensusVersion]
 	var consensusVersion string
 	if !exists || len(consensusVersions) == 0 {
-		s.log.Error().Msg("No Eth-Consensus-Version header")
+		s.log.Error().Msgf("No %s header", EthConsensusVersion)
 
-		return nil, errors.New("No Eth-Consensus-Version header provided")
+		return nil, fmt.Errorf("no %s header provided", EthConsensusVersion)
 	}
 	consensusVersion = consensusVersions[0]
 
