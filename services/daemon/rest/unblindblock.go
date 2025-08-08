@@ -27,6 +27,7 @@ import (
 	apiv1capella "github.com/attestantio/go-eth2-client/api/v1/capella"
 	apiv1deneb "github.com/attestantio/go-eth2-client/api/v1/deneb"
 	apiv1electra "github.com/attestantio/go-eth2-client/api/v1/electra"
+	apiv1fulu "github.com/attestantio/go-eth2-client/api/v1/fulu"
 	"github.com/attestantio/go-eth2-client/spec"
 	"github.com/attestantio/go-eth2-client/spec/deneb"
 	"github.com/pkg/errors"
@@ -160,6 +161,9 @@ func (s *Service) unmarshalBlindedBlock(ctx context.Context,
 	case "electra":
 		signedBlindedBeaconBlock.Version = spec.DataVersionElectra
 		signedBlindedBeaconBlock.Electra = &apiv1electra.SignedBlindedBeaconBlock{}
+	case "fulu":
+		signedBlindedBeaconBlock.Version = spec.DataVersionFulu
+		signedBlindedBeaconBlock.Fulu = &apiv1fulu.SignedBlindedBeaconBlock{}
 	default:
 		return nil, fmt.Errorf("unknown block version %v", consensusVersion)
 	}
@@ -192,6 +196,8 @@ func (s *Service) unmarshalBlindedBlockJSON(_ context.Context,
 		err = json.NewDecoder(body).Decode(signedBlindedBeaconBlock.Deneb)
 	case spec.DataVersionElectra:
 		err = json.NewDecoder(body).Decode(signedBlindedBeaconBlock.Electra)
+	case spec.DataVersionFulu:
+		err = json.NewDecoder(body).Decode(signedBlindedBeaconBlock.Fulu)
 	default:
 		err = fmt.Errorf("unsupported block version %v", signedBlindedBeaconBlock.Version)
 	}
@@ -224,6 +230,8 @@ func (s *Service) unmarshalBlindedBlockSSZ(_ context.Context,
 		err = signedBlindedBeaconBlock.Deneb.UnmarshalSSZ(data)
 	case spec.DataVersionElectra:
 		err = signedBlindedBeaconBlock.Electra.UnmarshalSSZ(data)
+	case spec.DataVersionFulu:
+		err = signedBlindedBeaconBlock.Fulu.UnmarshalSSZ(data)
 	default:
 		err = fmt.Errorf("unsupported block version %v", signedBlindedBeaconBlock.Version)
 	}
@@ -276,6 +284,15 @@ func (s *Service) outputUnblindedBlock(_ context.Context,
 				Commitments: proposal.Electra.SignedBlock.Message.Body.BlobKZGCommitments,
 				Proofs:      proposal.Electra.KZGProofs,
 				Blobs:       proposal.Electra.Blobs,
+			},
+		}
+	case spec.DataVersionFulu:
+		resp.Data = &unblindBlockResponseData{
+			ExecutionPayload: proposal.Fulu.SignedBlock.Message.Body.ExecutionPayload,
+			BlobsBundle: &unblindBlockResponseBlobsBundle{
+				Commitments: proposal.Fulu.SignedBlock.Message.Body.BlobKZGCommitments,
+				Proofs:      proposal.Fulu.KZGProofs,
+				Blobs:       proposal.Fulu.Blobs,
 			},
 		}
 	default:

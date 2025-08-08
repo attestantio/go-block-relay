@@ -6,7 +6,7 @@ toolchain go1.23.2
 
 require (
 	github.com/attestantio/go-builder-client v0.6.1
-	github.com/attestantio/go-eth2-client v0.24.2
+	github.com/attestantio/go-eth2-client v0.26.1-0.20250721122214-dc2928832acc
 	github.com/ferranbt/fastssz v0.1.4
 	github.com/gin-gonic/gin v1.10.0
 	// go-yaml after 1.9.2 has memory issues due to https://github.com/goccy/go-yaml/issues/325; avoid.
@@ -18,6 +18,8 @@ require (
 	github.com/stretchr/testify v1.10.0
 	gotest.tools v2.2.0+incompatible
 )
+
+replace github.com/attestantio/go-eth2-client => github.com/hoanhan101/go-eth2-client v0.0.0-20250808225135-ce24836e0275
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
