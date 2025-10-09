@@ -8,11 +8,11 @@ run:
   # Options: readonly, vendor, mod, sum
   # readonly: only read from module cache, don't download new modules
   modules-download-mode: readonly
-  
+
   # Whether to run linters on test files
   # Set to false to skip test files and improve performance
   tests: false
-  
+
   # Allow multiple linters to run in parallel for better performance
   # Set to true to enable parallel execution of linters
   allow-parallel-runners: true
@@ -22,33 +22,33 @@ linters:
   # Options: all, fast, or specific linter names
   # all: enables all available linters (except those in disable list)
   default: all
-  
+
   # List of linters to disable
   # These linters will not run even if they're in the default set
   disable:
-    - cyclop        # Disable cyclomatic complexity checker (can be too strict)
-    - depguard      # Disable dependency guard (checks for allowed/forbidden imports)
-    - dupl          # Disable duplicate code detector (can produce false positives)
-    - err113        # Disable error comparison checker (can be overly strict)
-    - exhaustive    # Disable exhaustive enum checking (can be too strict)
-    - exhaustruct   # Disable exhaustive struct initialization (can be too strict)
+    - cyclop # Disable cyclomatic complexity checker (can be too strict)
+    - depguard # Disable dependency guard (checks for allowed/forbidden imports)
+    - dupl # Disable duplicate code detector (can produce false positives)
+    - err113 # Disable error comparison checker (can be overly strict)
+    - exhaustive # Disable exhaustive enum checking (can be too strict)
+    - exhaustruct # Disable exhaustive struct initialization (can be too strict)
     - forcetypeassert # Disable forced type assertion checker (can be too strict)
-    - funlen        # Disable function length checker (can be too strict)
+    - funlen # Disable function length checker (can be too strict)
     - gochecknoglobals # Disable global variable checker (can be too strict)
-    - gocognit      # Disable cognitive complexity checker (can be too strict)
-    - goconst       # Disable constant finder (can be too strict)
-    - iface         # Disable interface checker (can be too strict)
-    - ireturn       # Disable interface return checker (can be too strict)
-    - lll           # Disable line length checker (overridden by settings below)
-    - mnd           # Disable magic number detector (can be too strict)
-    - nestif        # Disable nested if checker (can be too strict)
-    - nilnil        # Disable nil-nil checker (can be too strict)
-    - nlreturn      # Disable newline before return checker (overridden by settings below)
-    - perfsprint    # Disable performance string formatting checker (can be too strict)
-    - promlinter    # Disable Prometheus linter (not needed for this project)
-    - varnamelen    # Disable variable name length checker (can be too strict)
-    - wrapcheck     # Disable error wrapping checker (can be too strict)
-    - wsl           # Disable whitespace linter (can be too strict)
+    - gocognit # Disable cognitive complexity checker (can be too strict)
+    - goconst # Disable constant finder (can be too strict)
+    - iface # Disable interface checker (can be too strict)
+    - ireturn # Disable interface return checker (can be too strict)
+    - lll # Disable line length checker (overridden by settings below)
+    - mnd # Disable magic number detector (can be too strict)
+    - nestif # Disable nested if checker (can be too strict)
+    - nilnil # Disable nil-nil checker (can be too strict)
+    - nlreturn # Disable newline before return checker (overridden by settings below)
+    - perfsprint # Disable performance string formatting checker (can be too strict)
+    - promlinter # Disable Prometheus linter (not needed for this project)
+    - varnamelen # Disable variable name length checker (can be too strict)
+    - wrapcheck # Disable error wrapping checker (can be too strict)
+    - wsl # Disable whitespace linter (can be too strict)
   # Settings for specific linters
   settings:
     # goheader: Check for license headers in Go files
@@ -72,26 +72,26 @@ linters:
         WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
         See the License for the specific language governing permissions and
         limitations under the License.
-    
+
     # gosec: Security vulnerability scanner
     gosec:
       excludes:
         # Exclude specific gosec rules
         # G115: Use of insecure random number generator (acceptable for this use case)
         - G115
-    
+
     # lll: Line length linter (re-enabled with custom settings)
     lll:
       # Maximum line length allowed
       # Set to 132 to allow longer lines for better readability
       line-length: 132
-    
+
     # nlreturn: Newline before return statement checker (re-enabled with custom settings)
     nlreturn:
       # Minimum number of statements in a block before requiring newline before return
       # Set to 3 to allow shorter blocks without newlines
       block-size: 3
-    
+
     # staticcheck: Advanced Go linter with many checks
     staticcheck:
       checks:
@@ -100,7 +100,7 @@ linters:
         # Disable specific checks
         # ST1000: Incorrect or missing package comment (can be too strict)
         - -ST1000
-    
+
     # tagliatelle: Check struct tags follow naming conventions
     tagliatelle:
       case:
@@ -115,34 +115,40 @@ linters:
     # Options: strict, lax, ignore
     # lax: exclude generated files but be lenient about detection
     generated: lax
-    
+
     # Preset exclusions for common false positives
     presets:
-      - common-false-positives  # Exclude common false positive patterns
-      - std-error-handling      # Exclude standard error handling patterns
-    
+      - common-false-positives # Exclude common false positive patterns
+      - std-error-handling # Exclude standard error handling patterns
+
     # File path patterns to exclude from linting
     paths:
-      - .*_ssz\.go$    # Exclude SSZ (Simple Serialize) generated files
-      - third_party$   # Exclude third-party code
-      - builtin$       # Exclude builtin code
-      - examples$      # Exclude example code
+      - .*_ssz\.go$ # Exclude SSZ (Simple Serialize) generated files
+      - third_party$ # Exclude third-party code
+      - builtin$ # Exclude builtin code
+      - examples$ # Exclude example code
+
+    rules:
+      # Suppress revive var-naming warning for generic package name in the types package
+      - path: types/.*.go
+        text: "var-naming: avoid meaningless package names.*"
+
 # Formatters: Code formatters to run alongside linters
 formatters:
   # List of formatters to enable
   enable:
-    - gofmt      # Standard Go formatter
-    - gofumpt    # Stricter Go formatter with additional rules
-    - goimports  # Go formatter that also manages imports
-  
+    - gofmt # Standard Go formatter
+    - gofumpt # Stricter Go formatter with additional rules
+    - goimports # Go formatter that also manages imports
+
   # Exclusions for formatters (same as linters)
   exclusions:
     # How to handle generated files in formatters
     generated: lax
-    
+
     # File path patterns to exclude from formatting
     paths:
-      - .*_ssz\.go$    # Exclude SSZ generated files
-      - third_party$   # Exclude third-party code
-      - builtin$       # Exclude builtin code
-      - examples$      # Exclude example code
+      - .*_ssz\.go$ # Exclude SSZ generated files
+      - third_party$ # Exclude third-party code
+      - builtin$ # Exclude builtin code
+      - examples$ # Exclude example code
