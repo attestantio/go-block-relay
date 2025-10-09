@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package prometheus provides Prometheus metrics integration.
 package prometheus
 
 import (
@@ -54,6 +55,7 @@ func parseAndCheckParameters(params ...Parameter) (*parameters, error) {
 	parameters := parameters{
 		logLevel: zerolog.GlobalLevel(),
 	}
+
 	for _, p := range params {
 		if params != nil {
 			p.apply(&parameters)

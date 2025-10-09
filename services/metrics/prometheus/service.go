@@ -48,11 +48,14 @@ func New(_ context.Context, params ...Parameter) (*Service, error) {
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
+
 		server := &http.Server{
 			Addr:              parameters.address,
 			ReadHeaderTimeout: 5 * time.Second,
 		}
-		if err := server.ListenAndServe(); err != nil {
+
+		err := server.ListenAndServe()
+		if err != nil {
 			s.log.Warn().Str("metrics_address", parameters.address).Err(err).Msg("Failed to run metrics server")
 		}
 	}()

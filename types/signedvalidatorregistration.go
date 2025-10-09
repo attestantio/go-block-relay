@@ -54,31 +54,36 @@ func (s *SignedValidatorRegistration) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (s *SignedValidatorRegistration) UnmarshalJSON(input []byte) error {
 	var data signedValidatorRegistrationJSON
-	if err := json.Unmarshal(input, &data); err != nil {
+
+	err := json.Unmarshal(input, &data)
+	if err != nil {
 		return errors.Wrap(err, "invalid JSON")
 	}
 
 	return s.unpack(&data)
 }
 
-func (s *SignedValidatorRegistration) unpack(data *signedValidatorRegistrationJSON) error {
-	if data.Message == nil {
-		return errors.New("message missing")
-	}
-	s.Message = data.Message
-	if data.Signature == "" {
-		return errors.New("signature missing")
-	}
-	signature, err := hex.DecodeString(strings.TrimPrefix(data.Signature, "0x"))
+// String returns a string version of the structure.
+func (s *SignedValidatorRegistration) String() string {
+	data, err := yaml.Marshal(s)
 	if err != nil {
-		return errors.Wrap(err, "invalid value for signature")
+		return fmt.Sprintf("ERR: %v", err)
 	}
-	if len(signature) != phase0.SignatureLength {
-		return fmt.Errorf("incorrect length %d for signature", len(signature))
-	}
-	copy(s.Signature[:], signature)
 
-	return nil
+	return string(data)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler.
+func (s *SignedValidatorRegistration) UnmarshalYAML(input []byte) error {
+	// We unmarshal to the JSON struct to save on duplicate code.
+	var data signedValidatorRegistrationJSON
+
+	err := yaml.Unmarshal(input, &data)
+	if err != nil {
+		return err
+	}
+
+	return s.unpack(&data)
 }
 
 // MarshalYAML implements yaml.Marshaler.
@@ -94,23 +99,27 @@ func (s *SignedValidatorRegistration) MarshalYAML() ([]byte, error) {
 	return bytes.ReplaceAll(yamlBytes, []byte(`"`), []byte(`'`)), nil
 }
 
-// UnmarshalYAML implements yaml.Unmarshaler.
-func (s *SignedValidatorRegistration) UnmarshalYAML(input []byte) error {
-	// We unmarshal to the JSON struct to save on duplicate code.
-	var data signedValidatorRegistrationJSON
-	if err := yaml.Unmarshal(input, &data); err != nil {
-		return err
+func (s *SignedValidatorRegistration) unpack(data *signedValidatorRegistrationJSON) error {
+	if data.Message == nil {
+		return errors.New("message missing")
 	}
 
-	return s.unpack(&data)
-}
+	s.Message = data.Message
 
-// String returns a string version of the structure.
-func (s *SignedValidatorRegistration) String() string {
-	data, err := yaml.Marshal(s)
+	if data.Signature == "" {
+		return errors.New("signature missing")
+	}
+
+	signature, err := hex.DecodeString(strings.TrimPrefix(data.Signature, "0x"))
 	if err != nil {
-		return fmt.Sprintf("ERR: %v", err)
+		return errors.Wrap(err, "invalid value for signature")
 	}
 
-	return string(data)
+	if len(signature) != phase0.SignatureLength {
+		return fmt.Errorf("incorrect length %d for signature", len(signature))
+	}
+
+	copy(s.Signature[:], signature)
+
+	return nil
 }
