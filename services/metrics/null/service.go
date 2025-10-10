@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package null provides null metrics implementation.
 package null
 
 import "github.com/attestantio/go-block-relay/services/metrics"
