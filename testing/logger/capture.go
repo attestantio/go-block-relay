@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package logger provides testing utilities for log capture.
 package logger
 
 import (
@@ -29,20 +30,6 @@ type LogCapture struct {
 	entries []map[string]any
 }
 
-// Write captures an individual log message.
-func (c *LogCapture) Write(p []byte) (int, error) {
-	entry := make(map[string]any)
-	err := json.Unmarshal(p, &entry)
-	if err != nil {
-		return -1, err
-	}
-	c.mu.Lock()
-	c.entries = append(c.entries, entry)
-	c.mu.Unlock()
-
-	return len(p), nil
-}
-
 // NewLogCapture captures logs for querying.
 // Logs are created in JSON format and without timestamps.
 func NewLogCapture() *LogCapture {
@@ -53,6 +40,22 @@ func NewLogCapture() *LogCapture {
 	zerologger.Logger = logger
 
 	return c
+}
+
+// Write captures an individual log message.
+func (c *LogCapture) Write(p []byte) (int, error) {
+	entry := make(map[string]any)
+
+	err := json.Unmarshal(p, &entry)
+	if err != nil {
+		return -1, err
+	}
+
+	c.mu.Lock()
+	c.entries = append(c.entries, entry)
+	c.mu.Unlock()
+
+	return len(p), nil
 }
 
 // AssertHasEntry checks if there is a log entry with the given string.
@@ -69,13 +72,16 @@ func (c *LogCapture) HasLog(fields map[string]any) bool {
 	defer c.mu.Unlock()
 
 	var matched bool
+
 	for i := range c.entries {
 		matches := 0
+
 		for key, value := range fields {
 			if c.hasField(c.entries[i], key, value) {
 				matches++
 			}
 		}
+
 		if matches == len(fields) {
 			matched = true
 
@@ -86,6 +92,11 @@ func (c *LogCapture) HasLog(fields map[string]any) bool {
 	return matched
 }
 
+// Entries returns all captures log entries.
+func (c *LogCapture) Entries() []map[string]any {
+	return c.entries
+}
+
 // hasField returns true if the entry has a matching field.
 //
 //nolint:gocyclo,cyclop,gocognit
@@ -94,6 +105,7 @@ func (*LogCapture) hasField(entry map[string]any, key string, value any) bool {
 		if entryKey != key {
 			continue
 		}
+
 		switch v := value.(type) {
 		case bool:
 			if entryValue == v {
@@ -157,9 +169,4 @@ func (*LogCapture) hasField(entry map[string]any, key string, value any) bool {
 	}
 
 	return false
-}
-
-// Entries returns all captures log entries.
-func (c *LogCapture) Entries() []map[string]any {
-	return c.entries
 }

@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package loggers provides logging utilities for the block relay.
 package loggers
 
 import (
@@ -31,11 +32,13 @@ func NewGinLogger(log zerolog.Logger) gin.HandlerFunc {
 
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
+
 		if raw != "" {
 			path = path + "?" + raw
 		}
 
 		var e *zerolog.Event
+
 		switch {
 		case c.Writer.Status() >= 400 && c.Writer.Status() < 500:
 			e = log.Warn()

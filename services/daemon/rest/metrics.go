@@ -30,10 +30,12 @@ func registerMetrics(ctx context.Context, monitor metrics.Service) error {
 		// Already registered.
 		return nil
 	}
+
 	if monitor == nil {
 		// No monitor.
 		return nil
 	}
+
 	if monitor.Presenter() == "prometheus" {
 		return registerPrometheusMetrics(ctx)
 	}
@@ -47,7 +49,9 @@ func registerPrometheusMetrics(_ context.Context) error {
 		Name:      "requests_total",
 		Help:      "Requests",
 	}, []string{"request", "result"})
-	if err := prometheus.Register(requests); err != nil {
+
+	err := prometheus.Register(requests)
+	if err != nil {
 		return errors.Wrap(err, "failed to register requests_total")
 	}
 
