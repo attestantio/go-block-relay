@@ -17,6 +17,7 @@ import (
 	"errors"
 
 	"github.com/attestantio/go-block-relay/services/blockauctioneer"
+	"github.com/attestantio/go-block-relay/services/blocksubmitter"
 	"github.com/attestantio/go-block-relay/services/blockunblinder"
 	"github.com/attestantio/go-block-relay/services/builderbidprovider"
 	"github.com/attestantio/go-block-relay/services/metrics"
@@ -34,6 +35,7 @@ type parameters struct {
 	blockAuctioneer    blockauctioneer.Service
 	builderBidProvider builderbidprovider.Service
 	blockUnblinder     blockunblinder.Service
+	blockSubmitter     blocksubmitter.Service
 }
 
 // Parameter is the interface for service parameters.
@@ -100,6 +102,13 @@ func WithBlockAuctioneer(blockAuctioneer blockauctioneer.Service) Parameter {
 func WithBlockUnblinder(blockUnblinder blockunblinder.Service) Parameter {
 	return parameterFunc(func(p *parameters) {
 		p.blockUnblinder = blockUnblinder
+	})
+}
+
+// WithBlockSubmitter sets the block submitter.
+func WithBlockSubmitter(blockSubmitter blocksubmitter.Service) Parameter {
+	return parameterFunc(func(p *parameters) {
+		p.blockSubmitter = blockSubmitter
 	})
 }
 
