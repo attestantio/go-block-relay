@@ -61,7 +61,7 @@ func (s *Service) submitBlindedBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.sendResponse(w,
-		http.StatusOK,
+		http.StatusAccepted,
 		map[string]string{},
 		nil,
 	)
