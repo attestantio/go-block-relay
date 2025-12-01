@@ -11,7 +11,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package logger provides testing utilities for log capture.
 package logger
 
 import (
