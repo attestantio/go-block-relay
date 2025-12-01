@@ -34,6 +34,7 @@ import (
 
 func (s *Service) postUnblindBlock(w http.ResponseWriter, r *http.Request) {
 	s.log.Trace().Msg("unblindBlock called")
+
 	ctx := r.Context()
 
 	signedBlindedBeaconBlock, err := s.obtainUnblindedBlock(ctx, r)
@@ -57,6 +58,7 @@ func (s *Service) postUnblindBlock(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, relay.ErrInvalidOptions) {
 			code = http.StatusBadRequest
 		}
+
 		s.log.Error().Err(err).Msg("Failed to unblind block")
 		s.sendResponse(w,
 			http.StatusInternalServerError,
@@ -121,12 +123,15 @@ func (s *Service) obtainUnblindedBlock(ctx context.Context,
 
 	// Obtain the consensus version so we know what we have to unmarshal to.
 	consensusVersions, exists := r.Header[EthConsensusVersion]
+
 	var consensusVersion string
+
 	if !exists || len(consensusVersions) == 0 {
 		s.log.Error().Msgf("No %s header", EthConsensusVersion)
 
 		return nil, fmt.Errorf("no %s header provided", EthConsensusVersion)
 	}
+
 	consensusVersion = consensusVersions[0]
 
 	signedBlindedBeaconBlock, err := s.unmarshalBlindedBlock(ctx, contentType, consensusVersion, r)
@@ -265,7 +270,9 @@ func (s *Service) outputUnblindedBlock(_ context.Context,
 	error,
 ) {
 	resp := &unblindBlockResponse{}
+
 	resp.Version = proposal.Version
+
 	switch resp.Version {
 	case spec.DataVersionDeneb:
 		resp.Data = &unblindBlockResponseData{

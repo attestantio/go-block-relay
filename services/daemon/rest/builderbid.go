@@ -31,6 +31,7 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 
 	// Obtain path variables.
 	vars := mux.Vars(r)
+
 	tmpInt, err := strconv.ParseUint(vars["slot"], 10, 64)
 	if err != nil {
 		s.log.Debug().Err(err).Str("slot", vars["slot"]).Msg("Invalid slot")
@@ -45,7 +46,9 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
 	slot := phase0.Slot(tmpInt)
+
 	tmpBytes, err := hex.DecodeString(strings.TrimPrefix(vars["parenthash"], "0x"))
 	if err != nil {
 		s.log.Debug().Err(err).Str("parenthash", vars["parenthash"]).Msg("Invalid parent hash")
@@ -60,8 +63,10 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
 	parentHash := phase0.Hash32{}
 	copy(parentHash[:], tmpBytes)
+
 	tmpBytes, err = hex.DecodeString(strings.TrimPrefix(vars["pubkey"], "0x"))
 	if err != nil {
 		s.log.Trace().Err(err).Str("pubkey", vars["pubkey"]).Msg("Invalid public key")
@@ -76,6 +81,7 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
 	pubkey := phase0.BLSPubKey{}
 	copy(pubkey[:], tmpBytes)
 
@@ -85,6 +91,7 @@ func (s *Service) getBuilderBid(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, relay.ErrInvalidOptions) {
 			code = http.StatusBadRequest
 		}
+
 		s.log.Error().Err(err).Msg("Failed to obtain bid")
 		s.sendResponse(w,
 			http.StatusInternalServerError,

@@ -31,11 +31,13 @@ func NewGinLogger(log zerolog.Logger) gin.HandlerFunc {
 
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
+
 		if raw != "" {
 			path = path + "?" + raw
 		}
 
 		var e *zerolog.Event
+
 		switch {
 		case c.Writer.Status() >= 400 && c.Writer.Status() < 500:
 			e = log.Warn()

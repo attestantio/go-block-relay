@@ -55,7 +55,8 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 		log = log.Level(parameters.logLevel)
 	}
 
-	if err := registerMetrics(ctx, parameters.monitor); err != nil {
+	err = registerMetrics(ctx, parameters.monitor)
+	if err != nil {
 		return nil, errors.New("failed to register metrics")
 	}
 
@@ -66,11 +67,18 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 		blockUnblinder:     parameters.blockUnblinder,
 	}
 
-	if err := s.startServer(ctx, parameters.serverName, parameters.listenAddress); err != nil {
+	err = s.startServer(ctx, parameters.serverName, parameters.listenAddress)
+	if err != nil {
 		return nil, err
 	}
 
 	return s, nil
+}
+
+func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.log.Debug().Str("method", r.Method).Stringer("url", r.URL).Msg("Unhandled request")
+
+	w.WriteHeader(http.StatusNotFound)
 }
 
 func (s *Service) startServer(ctx context.Context,
@@ -83,9 +91,12 @@ func (s *Service) startServer(ctx context.Context,
 	// Start up the router.
 	r := gin.New()
 	r.Use(gin.Recovery())
-	if err := r.SetTrustedProxies(nil); err != nil {
+
+	err := r.SetTrustedProxies(nil)
+	if err != nil {
 		return errors.Wrap(err, "failed to set trusted proxies")
 	}
+
 	r.Use(loggers.NewGinLogger(s.log))
 
 	router := mux.NewRouter()
@@ -151,7 +162,9 @@ func (s *Service) startServer(ctx context.Context,
 	// Insecure.
 	go func() {
 		s.log.Trace().Str("listen_address", listenAddress).Msg("Starting HTTP daemon")
-		if err := s.srv.ListenAndServe(); err != nil {
+
+		err := s.srv.ListenAndServe()
+		if err != nil {
 			s.log.Error().Err(err).Msg("HTTP server shut down")
 		}
 	}()
@@ -162,41 +175,11 @@ func (s *Service) startServer(ctx context.Context,
 	return nil
 }
 
-func (s *Service) sigloop(ctx context.Context) {
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-	for {
-		select {
-		case sig := <-sigCh:
-			if sig == syscall.SIGINT || sig == syscall.SIGTERM || sig == os.Interrupt || sig == os.Kill {
-				s.log.Info().Msg("Received signal, shutting down")
-				if err := s.srv.Shutdown(ctx); err != nil {
-					s.log.Warn().Err(err).Msg("Failed to shutdown service")
-				}
-
-				return
-			}
-		case <-ctx.Done():
-			s.log.Info().Msg("Context done, shutting down")
-			if err := s.srv.Shutdown(ctx); err != nil {
-				s.log.Warn().Err(err).Msg("Failed to shutdown service")
-			}
-
-			return
-		}
-	}
-}
-
-func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.log.Debug().Str("method", r.Method).Stringer("url", r.URL).Msg("Unhandled request")
-
-	w.WriteHeader(http.StatusNotFound)
-}
-
 func (s *Service) obtainContentType(_ context.Context,
 	r *http.Request,
 ) string {
 	contentTypeHeaderVals, exists := r.Header["Content-Type"]
+
 	var contentType string
 	if !exists {
 		// Assume that no content type == JSON, for backwards-compatibility.
@@ -210,7 +193,38 @@ func (s *Service) obtainContentType(_ context.Context,
 	if index > 0 {
 		contentType = contentType[:index]
 	}
+
 	contentType = strings.TrimSpace(contentType)
 
 	return contentType
+}
+
+func (s *Service) sigloop(ctx context.Context) {
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+
+	for {
+		select {
+		case sig := <-sigCh:
+			if sig == syscall.SIGINT || sig == syscall.SIGTERM || sig == os.Interrupt || sig == os.Kill {
+				s.log.Info().Msg("Received signal, shutting down")
+
+				err := s.srv.Shutdown(ctx)
+				if err != nil {
+					s.log.Warn().Err(err).Msg("Failed to shutdown service")
+				}
+
+				return
+			}
+		case <-ctx.Done():
+			s.log.Info().Msg("Context done, shutting down")
+
+			err := s.srv.Shutdown(ctx)
+			if err != nil {
+				s.log.Warn().Err(err).Msg("Failed to shutdown service")
+			}
+
+			return
+		}
+	}
 }

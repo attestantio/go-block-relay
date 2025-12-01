@@ -46,10 +46,13 @@ func (s *Service) sendResponse(w http.ResponseWriter,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+
 	for k, v := range headers {
 		w.Header().Set(k, v)
 	}
+
 	w.WriteHeader(statusCode)
+
 	_, err = w.Write(data)
 	if err != nil {
 		s.log.Error().Err(err).Msg("Failed to write response")

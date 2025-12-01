@@ -28,11 +28,14 @@ import (
 
 func (s *Service) postValidatorRegistrations(w http.ResponseWriter, r *http.Request) {
 	var statusCode int
+
 	var registrationErrors []string
+
 	var err error
 
 	passthroughProvider, isPassthroughProvider := s.validatorRegistrar.(validatorregistrar.ValidatorRegistrationPassthrough)
 	handler, isHandler := s.validatorRegistrar.(validatorregistrar.ValidatorRegistrationHandler)
+
 	switch {
 	case isPassthroughProvider:
 		statusCode, registrationErrors, err = s.postValidatorRegistrationsPassthrough(r.Context(), r, passthroughProvider)
@@ -40,6 +43,7 @@ func (s *Service) postValidatorRegistrations(w http.ResponseWriter, r *http.Requ
 		statusCode, registrationErrors, err = s.postValidatorRegistrationsHandler(r.Context(), r, handler)
 	default:
 		s.log.Error().Msg("Request not supported by service")
+
 		statusCode = http.StatusInternalServerError
 		err = errors.New("Request not supported by service")
 	}
@@ -58,6 +62,7 @@ func (s *Service) postValidatorRegistrations(w http.ResponseWriter, r *http.Requ
 	}
 
 	monitorRequestHandled("validator registrations", "success")
+
 	if len(registrationErrors) == 0 {
 		s.sendResponse(w,
 			http.StatusOK,
@@ -86,6 +91,7 @@ func (s *Service) postValidatorRegistrationsPassthrough(ctx context.Context,
 	registrationErrors, err := provider.ValidatorRegistrationsPassthrough(ctx, r.Body)
 	if err != nil {
 		s.log.Error().Err(err).Msg("Failed to register validators with passthrough")
+
 		code := http.StatusInternalServerError
 		if errors.Is(err, relay.ErrInvalidOptions) {
 			code = http.StatusBadRequest
@@ -106,6 +112,7 @@ func (s *Service) postValidatorRegistrationsHandler(ctx context.Context,
 	error,
 ) {
 	var registrations []*types.SignedValidatorRegistration
+
 	var err error
 
 	contentType := s.obtainContentType(ctx, r)
@@ -115,6 +122,7 @@ func (s *Service) postValidatorRegistrationsHandler(ctx context.Context,
 	default:
 		return http.StatusUnsupportedMediaType, nil, fmt.Errorf("content type %s not supported", contentType)
 	}
+
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}
@@ -122,6 +130,7 @@ func (s *Service) postValidatorRegistrationsHandler(ctx context.Context,
 	registrationErrors, err := provider.ValidatorRegistrations(ctx, registrations)
 	if err != nil {
 		s.log.Error().Err(err).Msg("Failed to register validators")
+
 		code := http.StatusInternalServerError
 		if errors.Is(err, relay.ErrInvalidOptions) {
 			code = http.StatusBadRequest
@@ -141,7 +150,9 @@ func (s *Service) postValidatorRegistrationsHandlerJSON(_ context.Context,
 ) {
 	// We need to unmarshal the request body ourselves.
 	registrations := make([]*types.SignedValidatorRegistration, 0)
-	if err := json.NewDecoder(r.Body).Decode(&registrations); err != nil {
+
+	err := json.NewDecoder(r.Body).Decode(&registrations)
+	if err != nil {
 		s.log.Debug().Err(err).Msg("Supplied with invalid data")
 
 		return nil, errors.Wrap(err, "invalid JSON")

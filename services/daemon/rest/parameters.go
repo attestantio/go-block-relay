@@ -109,6 +109,7 @@ func parseAndCheckParameters(params ...Parameter) (*parameters, error) {
 		logLevel: zerolog.GlobalLevel(),
 		monitor:  nullmetrics.New(),
 	}
+
 	for _, p := range params {
 		if params != nil {
 			p.apply(&parameters)
@@ -122,18 +123,23 @@ func parseAndCheckParameters(params ...Parameter) (*parameters, error) {
 	// if parameters.serverName == "" {
 	// 	return nil, errors.New("no server name specified")
 	// }
+
 	if parameters.listenAddress == "" {
 		return nil, errors.New("no listen address specified")
 	}
+
 	if parameters.validatorRegistrar == nil {
 		return nil, errors.New("no validator registrar specified")
 	}
+
 	if parameters.blockAuctioneer == nil {
 		return nil, errors.New("no block auctioneer specified")
 	}
+
 	if parameters.blockUnblinder == nil {
 		return nil, errors.New("no block unblinder specified")
 	}
+
 	if parameters.builderBidProvider == nil {
 		return nil, errors.New("no builder bid provider specified")
 	}

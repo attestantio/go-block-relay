@@ -23,7 +23,7 @@ import (
 )
 
 // Service defines the block auctioneer service.
-type Service interface{}
+type Service any
 
 // Results provides the results of the auction process.
 type Results struct {
