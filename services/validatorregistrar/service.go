@@ -22,7 +22,7 @@ import (
 )
 
 // Service defines the validator registrar service.
-type Service interface{}
+type Service any
 
 // ValidatorRegistrationPassthrough is the interface for handling validator registrations with passthrough.
 type ValidatorRegistrationPassthrough interface {

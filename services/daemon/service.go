@@ -15,4 +15,4 @@
 package api
 
 // Service defines a daemon service.
-type Service interface{}
+type Service any
