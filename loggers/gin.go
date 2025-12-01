@@ -11,7 +11,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package loggers provides logging utilities for the block relay.
 package loggers
 
 import (
