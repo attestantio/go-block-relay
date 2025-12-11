@@ -117,6 +117,31 @@ linters:
           severity: warning
           disabled: true
           exclude: [""]
+
+    wsl_v5:
+      disable:
+        - assign
+        - branch
+        - decl
+        - defer
+        - expr
+        - for
+        - go
+        - if
+        - inc-dec
+        - label
+        - range
+        - return
+        - select
+        - send
+        - switch
+        - type-switch
+        - append
+        - assign-exclusive
+        - assign-expr
+        - err
+        - leading-whitespace
+        - trailing-whitespace
   # Exclusions: Files and patterns to exclude from linting
   exclusions:
     # How to handle generated files
