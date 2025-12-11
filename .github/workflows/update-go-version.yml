@@ -99,13 +99,13 @@ jobs:
             NEEDS_UPDATE=true
           fi
 
-          if [ "$CURRENT_WORKFLOW_VERSION_LINT" != "${{ steps.fetch-version.outputs.version_number }}" ]; then
-            echo "golangci-lint workflow needs update: $CURRENT_WORKFLOW_VERSION_LINT -> ${{ steps.fetch-version.outputs.version_number }}"
+          if [ "$CURRENT_WORKFLOW_VERSION_LINT" != "${{ steps.fetch-version.outputs.short_version }}" ]; then
+            echo "golangci-lint workflow needs update: $CURRENT_WORKFLOW_VERSION_LINT -> ${{ steps.fetch-version.outputs.short_version }}"
             NEEDS_UPDATE=true
           fi
 
-          if [ "$CURRENT_WORKFLOW_VERSION_TEST" != "${{ steps.fetch-version.outputs.version_number }}" ]; then
-            echo "test workflow needs update: $CURRENT_WORKFLOW_VERSION_TEST -> ${{ steps.fetch-version.outputs.version_number }}"
+          if [ "$CURRENT_WORKFLOW_VERSION_TEST" != "${{ steps.fetch-version.outputs.short_version }}" ]; then
+            echo "test workflow needs update: $CURRENT_WORKFLOW_VERSION_TEST -> ${{ steps.fetch-version.outputs.short_version }}"
             NEEDS_UPDATE=true
           fi
 
@@ -166,10 +166,10 @@ jobs:
           echo "Updating workflow files..."
 
           # Update golangci-lint.yml
-          sed "s/go-version: '[0-9.]*'/go-version: '${{ steps.fetch-version.outputs.short_version }}'/" .github/workflows/golangci-lint.yml > golangci-lint.yml.tmp && mv golangci-lint.yml.tmp .github/workflows/golangci-lint.yml
+          sed "s/go-version:\s*\"([\d\.]+)\"/go-version: /"'${{ steps.fetch-version.outputs.short_version }}'/" .github/workflows/golangci-lint.yml > golangci-lint.yml.tmp && mv golangci-lint.yml.tmp .github/workflows/golangci-lint.yml
 
           # Update test.yml
-          sed "s/go-version: '[0-9.]*'/go-version: '${{ steps.fetch-version.outputs.short_version }}'/" .github/workflows/test.yml > test.yml.tmp && mv test.yml.tmp .github/workflows/test.yml
+          sed "s/go-version:\s*\"([\d\.]+)\"/go-version: /"'${{ steps.fetch-version.outputs.short_version }}'/" .github/workflows/test.yml > test.yml.tmp && mv test.yml.tmp .github/workflows/test.yml
 
           echo "Workflow files updated successfully"
 
@@ -208,7 +208,7 @@ jobs:
           git commit -m "chore: update Go to version ${{ steps.fetch-version.outputs.version_number }}" \
                      -m "- Update go.mod go version to ${{ steps.fetch-version.outputs.short_version }}" \
                      -m "- Update go.mod toolchain to ${{ steps.fetch-version.outputs.toolchain_version }}" \
-                     -m "- Update workflow files to use Go ${{ steps.fetch-version.outputs.version_number }}" \
+                     -m "- Update workflow files to use Go ${{ steps.fetch-version.outputs.short_version }}" \
                      -m "- Run go mod tidy to update dependencies"
 
           echo "Changes committed successfully"
@@ -296,7 +296,7 @@ jobs:
             echo "### Changes Made" >> $GITHUB_STEP_SUMMARY
             echo "- go.mod go version: \`${{ steps.check-versions.outputs.current_go_version }}\` → \`${{ steps.fetch-version.outputs.short_version }}\`" >> $GITHUB_STEP_SUMMARY
             echo "- go.mod toolchain: \`${{ steps.check-versions.outputs.current_toolchain }}\` → \`${{ steps.fetch-version.outputs.toolchain_version }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "- Workflow Go version: → \`${{ steps.fetch-version.outputs.version_number }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Workflow Go version: → \`${{ steps.fetch-version.outputs.short_version }}\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "A Pull Request has been created or updated on branch \`${{ env.branch_name }}\`" >> $GITHUB_STEP_SUMMARY
           fi
