@@ -166,10 +166,10 @@ jobs:
           echo "Updating workflow files..."
 
           # Update golangci-lint.yml
-          sed "s/go-version:\s*\"([\d\.]+)\"/go-version: /"'${{ steps.fetch-version.outputs.short_version }}'/" .github/workflows/golangci-lint.yml > golangci-lint.yml.tmp && mv golangci-lint.yml.tmp .github/workflows/golangci-lint.yml
+          sed "s/go-version: \"[0-9.]*\"/go-version: \"${{ steps.fetch-version.outputs.short_version }}\"/" .github/workflows/golangci-lint.yml > golangci-lint.yml.tmp && mv golangci-lint.yml.tmp .github/workflows/golangci-lint.yml
 
           # Update test.yml
-          sed "s/go-version:\s*\"([\d\.]+)\"/go-version: /"'${{ steps.fetch-version.outputs.short_version }}'/" .github/workflows/test.yml > test.yml.tmp && mv test.yml.tmp .github/workflows/test.yml
+          sed "s/go-version: \"[0-9.]*\"/go-version: \"${{ steps.fetch-version.outputs.short_version }}\"/" .github/workflows/test.yml > test.yml.tmp && mv test.yml.tmp .github/workflows/test.yml
 
           echo "Workflow files updated successfully"
 
