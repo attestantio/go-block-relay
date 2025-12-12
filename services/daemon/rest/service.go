@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/attestantio/go-block-relay/loggers"
+	"github.com/attestantio/go-block-relay/services/blocksubmitter"
 	"github.com/attestantio/go-block-relay/services/blockunblinder"
 	"github.com/attestantio/go-block-relay/services/builderbidprovider"
 	"github.com/attestantio/go-block-relay/services/validatorregistrar"
@@ -40,6 +41,7 @@ type Service struct {
 	validatorRegistrar validatorregistrar.Service
 	builderBidProvider builderbidprovider.Service
 	blockUnblinder     blockunblinder.Service
+	blockSubmitter     blocksubmitter.Service
 }
 
 // New creates a new REST daemon service.
@@ -65,6 +67,7 @@ func New(ctx context.Context, params ...Parameter) (*Service, error) {
 		validatorRegistrar: parameters.validatorRegistrar,
 		builderBidProvider: parameters.builderBidProvider,
 		blockUnblinder:     parameters.blockUnblinder,
+		blockSubmitter:     parameters.blockSubmitter,
 	}
 
 	err = s.startServer(ctx, parameters.serverName, parameters.listenAddress)
@@ -104,6 +107,7 @@ func (s *Service) startServer(ctx context.Context,
 	router.HandleFunc("/eth/v1/builder/header/{slot}/{parenthash}/{pubkey}", s.getBuilderBid).Methods("GET")
 	router.HandleFunc("/eth/v1/builder/status", s.getStatus).Methods("GET")
 	router.HandleFunc("/eth/v1/builder/blinded_blocks", s.postUnblindBlock).Methods("POST")
+	router.HandleFunc("/eth/v2/builder/blinded_blocks", s.submitBlindedBlock).Methods("POST")
 	router.PathPrefix("/").Handler(s)
 
 	s.srv = &http.Server{
