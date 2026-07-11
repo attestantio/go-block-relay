@@ -5,8 +5,8 @@ go 1.25.0
 toolchain go1.25.6
 
 require (
-	github.com/attestantio/go-builder-client v0.7.3-0.20260415161907-9fbf25e21f49
-	github.com/attestantio/go-eth2-client v0.28.1-0.20260415081624-a9e972865ca3
+	github.com/attestantio/go-builder-client v0.7.3-0.20260711075608-adea2e7fd783
+	github.com/attestantio/go-eth2-client v0.28.2-0.20260711074852-3f451da4d744
 	github.com/ferranbt/fastssz v0.1.4 // indirect
 	github.com/gin-gonic/gin v1.10.0
 	// go-yaml after 1.9.2 has memory issues due to https://github.com/goccy/go-yaml/issues/325; avoid.
