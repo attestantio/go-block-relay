@@ -5,7 +5,7 @@ go 1.25.0
 toolchain go1.25.6
 
 require (
-	github.com/attestantio/go-builder-client v0.7.3-0.20260716154307-d0c9e52705dc
+	github.com/attestantio/go-builder-client v0.7.3-0.20260716155604-72fcb97f6223
 	github.com/attestantio/go-eth2-client v0.28.2-0.20260716151422-85ac0f6e00e8
 	github.com/ferranbt/fastssz v0.1.4 // indirect
 	github.com/gin-gonic/gin v1.10.0
