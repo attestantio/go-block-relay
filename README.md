@@ -22,3 +22,15 @@
 ```sh
 go get github.com/attestantio/go-block-relay
 ```
+
+## Maintainers
+
+Chris Berry: [@bez625](https://github.com/Bez625).
+
+## Contribute
+
+Contributions welcome. Please check out [the issues](https://github.com/attestantio/go-block-relay/issues).
+
+## License
+
+[Apache-2.0](LICENSE) © 2026 Attestant Limited
