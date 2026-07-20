@@ -1,8 +1,8 @@
 module github.com/attestantio/go-block-relay
 
-go 1.25
+go 1.26
 
-toolchain go1.25.6
+toolchain go1.26.4
 
 require (
 	github.com/attestantio/go-builder-client v0.7.2
