@@ -1,8 +1,8 @@
 module github.com/attestantio/go-block-relay
 
-go 1.25.0
+go 1.27
 
-toolchain go1.25.6
+toolchain go1.27.1
 
 require (
 	github.com/attestantio/go-builder-client v0.8.0
@@ -11,14 +11,13 @@ require (
 	// go-yaml after 1.9.2 has memory issues due to https://github.com/goccy/go-yaml/issues/325; avoid.
 	github.com/goccy/go-yaml v1.9.2
 	github.com/gorilla/mux v1.8.1
+	github.com/pk910/dynamic-ssz v1.3.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.21.1
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
 	gotest.tools v2.2.0+incompatible
 )
-
-require github.com/pk910/dynamic-ssz v1.3.2
 
 require (
 	github.com/OffchainLabs/go-bitfield v0.0.0-20251031151322-f427d04d8506 // indirect
