@@ -32,6 +32,7 @@ linters:
     - err113 # Disable error comparison checker (can be overly strict)
     - exhaustive # Disable exhaustive enum checking (can be too strict)
     - exhaustruct # Disable exhaustive struct initialization (can be too strict)
+    - exhaustruct_v5 # Replaces exhaustruct in newer golangci-lint
     - forcetypeassert # Disable forced type assertion checker (can be too strict)
     - funlen # Disable function length checker (can be too strict)
     - gochecknoglobals # Disable global variable checker (can be too strict)

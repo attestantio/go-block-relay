@@ -13,6 +13,6 @@
 
 package types
 
-// Need to `go install github.com/pk910/dynamic-ssz/dynssz-gen@latest` for this to work.
+// Need to `go install github.com/pk910/dynamic-ssz/dynssz-gen@v1.4.0` for this to work.
 //go:generate rm -f signedvalidatorregistration_encoding.go validatorregistration_encoding.go
 //go:generate dynssz-gen -package . -legacy -without-dynamic-expressions -types SignedValidatorRegistration:signedvalidatorregistration_encoding.go,ValidatorRegistration:validatorregistration_encoding.go
