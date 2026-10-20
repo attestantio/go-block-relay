@@ -1,9 +1,9 @@
 github.com/OffchainLabs/go-bitfield v0.0.0-20251031151322-f427d04d8506 h1:d/SJkN8/9Ca+1YmuDiUJxAiV4w/a9S8NcsG7GMQSrVI=
 github.com/OffchainLabs/go-bitfield v0.0.0-20251031151322-f427d04d8506/go.mod h1:6TZI4FU6zT8x6ZfWa1J8YQ2NgW0wLV/W3fHRca8ISBo=
-github.com/attestantio/go-builder-client v0.8.0 h1:paYTXZLtpCBG/9/Y99f9OjPNh4C+ZuIavRs07WWgjYc=
-github.com/attestantio/go-builder-client v0.8.0/go.mod h1:M3rNO3ntGg+CE7aBDl+MVlwnEStZCiSRUzADG2ZoL+s=
-github.com/attestantio/go-eth2-client v0.29.0 h1:nOVPR6boXuGn5yg94pVOKcaoiO9yyjaYbM1vzwPF4n4=
-github.com/attestantio/go-eth2-client v0.29.0/go.mod h1:yhVnKAzIsFhtawbq6k/rA/Dy4vsPpu2Z2cGdQVrIjd0=
+github.com/attestantio/go-builder-client v0.9.1 h1:Ziz3Ya91sksmV4S65HBQt+ZmNvS2ptMB0snSf4B9edc=
+github.com/attestantio/go-builder-client v0.9.1/go.mod h1:IcPQk0AICP5kxt6OOmYIKXgkueBacL0iQ6iKzD9WMks=
+github.com/attestantio/go-eth2-client v0.30.2 h1:8LWN86Dh5PjXTwcrRR+SXcatcocFw7j08KO7NFqEcNo=
+github.com/attestantio/go-eth2-client v0.30.2/go.mod h1:IcbypY5iD/c/T5OLWVuZyWS8kM8HXkGc0ZW12uikfys=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/bytedance/sonic v1.13.2 h1:8/H1FempDZqC4VqjptGo14QQlJx8VdZJegxs6wwfqpQ=
